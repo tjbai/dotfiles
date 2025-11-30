@@ -1,0 +1,7 @@
+title-hidden = true
+frame = "buttonless"
+
+[font]
+normal = ["IBM Plex Mono"]
+size = 11.0
+

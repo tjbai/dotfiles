@@ -1,0 +1,19 @@
+font-size = 11
+theme = Gruvbox Material Dark
+background-opacity = 0.90
+background-blur-radius = 10
+cursor-style = block
+cursor-style-blink = false
+window-decoration = none
+shell-integration-features = no-cursor
+custom-shader = shaders/cursor_warp.glsl
+custom-shader-animation = always
+keybind = alt+left=text:\x1bb
+keybind = alt+right=text:\x1bf
+keybind = cmd+left=text:\x01
+keybind = cmd+right=text:\x05
+keybind = cmd+backspace=text:\x15
+keybind = cmd+shift+left_bracket=goto_split:previous
+keybind = cmd+shift+right_bracket=goto_split:next
+keybind = cmd+shift+e=equalize_splits
+selection-invert-fg-bg = true
