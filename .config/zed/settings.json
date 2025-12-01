@@ -5,7 +5,7 @@
   "base_keymap": "VSCode",
   "ui_font_size": 14,
   "buffer_font_size": 11,
-  "theme": "Catppuccin Macchiato",
+  "theme": "Kanagawa Dragon",
   "show_edit_predictions": false,
   "language_servers": [
     "basedpyright",

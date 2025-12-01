@@ -164,10 +164,41 @@ require("lazy").setup({
     opts = {
       options = { theme = "catppuccin", component_separators = "", section_separators = "" },
       sections = {
-        lualine_a = {}, lualine_b = {}, lualine_c = { "filename" },
-        lualine_x = { "location" }, lualine_y = {}, lualine_z = {},
+        lualine_a = {},
+        lualine_b = {},
+        lualine_c = {
+          {
+            'filename',
+            path = 3,
+            file_status = true,
+            newfile_status = true,
+            symbols = {
+              modified = '[+]',
+              readonly = '[-]',
+              unnamed = '[No Name]',
+              newfile = '[New]',
+            }
+          }
+        },
+        lualine_x = { "location" },
+        lualine_y = {},
+        lualine_z = {},
       },
-      inactive_sections = { lualine_c = { "filename" }, lualine_x = {} },
+      inactive_sections = {
+        lualine_c = {
+          {
+            'filename',
+            path = 3,
+            file_status = true,
+            symbols = {
+              modified = '[+]',
+              readonly = '[-]',
+              unnamed = '[No Name]',
+            }
+          }
+        },
+        lualine_x = {}
+      },
     },
   },
 
@@ -224,7 +255,18 @@ vim.cmd.colorscheme("catppuccin-mocha")
 -- lsp (native neovim 0.11)
 vim.lsp.enable('basedpyright')
 vim.lsp.enable('lua_ls')
-vim.lsp.enable('tsgo')
+vim.lsp.enable('tsgo', {
+  settings = {
+    typescript = {
+      preferences = {
+        includePackageJsonAutoImports = "auto",
+      },
+      tsserver = {
+        maxTsServerMemory = 8192, -- fuck me i'm getting wrecked
+      },
+    },
+  },
+})
 
 -- diagnostics
 vim.diagnostic.config({
@@ -347,4 +389,6 @@ if vim.g.neovide then
   map("i", "<D-v>", '<C-r>+')
   map("c", "<D-v>", '<C-r>+')
   map("n", "<D-a>", "ggVG")
+  map({ "n", "i", "v" }, "<D-s>", ":w<CR>", s)
+  map("c", "<D-s>", "<CR>", s)
 end

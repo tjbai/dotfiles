@@ -40,8 +40,14 @@ esac
 
 export EDITOR='vim'
 
-alias code="neovide"
-alias nv="neovide"
+nv() {
+  if [ $# -eq 0 ]; then
+    nohup neovide . </dev/null &>/dev/null &
+  else
+    nohup neovide "$@" </dev/null &>/dev/null &
+  fi
+  disown %%
+}
 alias lear="clear" # common typo lol
 alias gst="git status"
 alias gs="git status"
@@ -64,7 +70,6 @@ alias chat="uvpy scripts/run/chat.py"
 alias tsc="npx tsc --noEmit -p tsconfig.json"
 alias codexh="codex --model=gpt-5-codex -c model_reasoning_effort=\"high\""
 alias claude="$HOME/.claude/local/claude"
-alias amp="amp --try-opus"
 
 alias fish="ssh tbai4@login.rockfish.jhu.edu -t 'bash --noprofile --norc -c \"source /etc/profile.d/modules.sh && module load zsh && zsh && source ~/.bashrc\"'"
 alias perl="ssh perl -i ~/.ssh/nersc"
