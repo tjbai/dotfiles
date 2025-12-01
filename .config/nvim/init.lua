@@ -29,6 +29,7 @@ vim.opt.expandtab = true
 vim.opt.scrolloff = 8
 vim.opt.updatetime = 250
 vim.opt.wrap = false
+
 vim.opt.foldmethod = "expr"
 vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.foldlevel = 99
@@ -158,48 +159,45 @@ require("lazy").setup({
     end,
   },
 
-  -- statusline
+  -- winbar
   {
     "nvim-lualine/lualine.nvim",
-    opts = {
-      options = { theme = "catppuccin", component_separators = "", section_separators = "" },
-      sections = {
-        lualine_a = {},
-        lualine_b = {},
-        lualine_c = {
-          {
-            'filename',
-            path = 3,
-            file_status = true,
-            newfile_status = true,
-            symbols = {
-              modified = '[+]',
-              readonly = '[-]',
-              unnamed = '[No Name]',
-              newfile = '[New]',
-            }
-          }
+    config = function()
+      vim.opt.laststatus = 0
+      require("lualine").setup({
+        options = {
+          theme = "auto",
+          component_separators = "",
+          section_separators = "",
         },
-        lualine_x = { "location" },
-        lualine_y = {},
-        lualine_z = {},
-      },
-      inactive_sections = {
-        lualine_c = {
-          {
-            'filename',
-            path = 3,
-            file_status = true,
-            symbols = {
-              modified = '[+]',
-              readonly = '[-]',
-              unnamed = '[No Name]',
+        sections = {},
+        inactive_sections = {},
+        winbar = {
+          lualine_c = {
+            { function() return vim.fn.fnamemodify(vim.fn.getcwd(), ":~") end },
+            {
+              'filename',
+              path = 1,
+              file_status = true,
+              newfile_status = true,
+              symbols = { modified = '[+]', readonly = '[-]', unnamed = '[No Name]', newfile = '[New]' },
             }
-          }
+          },
         },
-        lualine_x = {}
-      },
-    },
+        inactive_winbar = {
+          lualine_c = {
+            { function() return vim.fn.fnamemodify(vim.fn.getcwd(), ":~") end },
+            {
+              'filename',
+              path = 1,
+              file_status = true,
+              newfile_status = true,
+              symbols = { modified = '[+]', readonly = '[-]', unnamed = '[No Name]', newfile = '[New]' },
+            }
+          },
+        },
+      })
+    end,
   },
 
   -- themes
@@ -329,8 +327,20 @@ map("n", "<D-2>", function() go_to_split(2) end, s)
 map("n", "<D-3>", function() go_to_split(3) end, s)
 map("n", "<D-4>", function() go_to_split(4) end, s)
 map("n", "<D-5>", function() go_to_split(5) end, s)
-map("n", "<D-{>", "<C-w>h", s)
-map("n", "<D-}>", "<C-w>l", s)
+
+-- tab pages (each with own cwd)
+map("n", "<D-t>", function()
+  vim.ui.input({ prompt = "Directory: ", default = "~/", completion = "dir" }, function(dir)
+    if dir and dir ~= "" then
+      vim.cmd("tabnew")
+      vim.cmd("tcd " .. vim.fn.expand(dir))
+      require("alpha").start()
+    end
+  end)
+end, s)
+map("n", "<D-}>", ":tabnext<CR>", s)
+map("n", "<D-{>", ":tabprev<CR>", s)
+map("n", "<D-S-w>", ":tabclose<CR>", s)
 
 -- telescope
 map("n", "<D-p>", ":Telescope find_files<CR>", s)
@@ -382,8 +392,8 @@ if vim.g.neovide then
   vim.g.neovide_scroll_animation_length = 0
   vim.g.neovide_cursor_animation_length = 0.03
   vim.g.neovide_cursor_trail_size = 0.3
-  vim.g.neovide_text_gamma = 0.0
-  vim.g.neovide_text_contrast = 0.5
+  vim.g.neovide_text_gamma = 0.8
+  vim.g.neovide_text_contrast = 0.1
   map({ "n", "v" }, "<D-c>", '"+y')
   map({ "n", "v" }, "<D-v>", '"+p')
   map("i", "<D-v>", '<C-r>+')
