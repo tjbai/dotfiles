@@ -29,6 +29,7 @@ vim.opt.expandtab = true
 vim.opt.scrolloff = 8
 vim.opt.updatetime = 250
 vim.opt.wrap = false
+vim.opt.autoread = true
 
 vim.opt.foldmethod = "expr"
 vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
@@ -67,7 +68,13 @@ require("lazy").setup({
   {
     "mg979/vim-visual-multi",
     init = function()
-      vim.g.VM_maps = { ["Find Under"] = "<D-d>", ["Find Subword Under"] = "<D-d>" }
+      vim.g.VM_maps = {
+        ["Find Under"] = "<D-d>",
+        ["Find Subword Under"] = "<D-d>",
+        ["Add Cursor Down"] = "<C-j>",
+        ["Add Cursor Up"] = "<C-k>",
+      }
+      vim.g.VM_leader = "\\"
       vim.g.VM_theme = "iceblue"
     end,
   },
@@ -118,12 +125,16 @@ require("lazy").setup({
     build = ":TSUpdate",
     config = function()
       require("nvim-treesitter.configs").setup({
+        ensure_installed = { "jinja", "jinja_inline", "javascript", "tsx", "typescript" },
         auto_install = true,
         highlight = { enable = true },
         indent = { enable = true },
       })
     end,
   },
+
+  -- jinja syntax (works with markdown, html, etc.)
+  { "HiPhish/jinja.vim" },
 
   -- folding
   {
@@ -142,8 +153,17 @@ require("lazy").setup({
   -- autopairs
   { "windwp/nvim-autopairs", event = "InsertEnter", opts = {} },
 
-  -- comments
-  { "numToStr/Comment.nvim", opts = {} },
+  -- comments (with jsx support)
+  {
+    "numToStr/Comment.nvim",
+    dependencies = { "JoosepAlviste/nvim-ts-context-commentstring" },
+    config = function()
+      require("ts_context_commentstring").setup({ enable_autocmd = false })
+      require("Comment").setup({
+        pre_hook = require("ts_context_commentstring.integrations.comment_nvim").create_pre_hook(),
+      })
+    end,
+  },
 
   -- git signs
   {
@@ -248,7 +268,41 @@ require("lazy").setup({
   },
 })
 
-vim.cmd.colorscheme("catppuccin-mocha")
+require("kanagawa").setup({
+  colors = {
+    theme = {
+      all = {
+        ui = {
+          bg_gutter = "none",
+        },
+      },
+    },
+  },
+})
+
+-- theme persistence
+local theme_file = vim.fn.stdpath("data") .. "/theme.txt"
+
+local function save_theme(name)
+  local f = io.open(theme_file, "w")
+  if f then f:write(name) f:close() end
+end
+
+local function load_theme()
+  local f = io.open(theme_file, "r")
+  if f then
+    local name = f:read("*l")
+    f:close()
+    if name and name ~= "" then return name end
+  end
+  return "kanagawa"
+end
+
+vim.cmd.colorscheme(load_theme())
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+  callback = function() save_theme(vim.g.colors_name) end,
+})
 
 -- lsp (native neovim 0.11)
 vim.lsp.enable('basedpyright')
@@ -274,6 +328,11 @@ vim.diagnostic.config({
   severity_sort = true,
 })
 
+-- auto reload files changed externally
+vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold" }, {
+  command = "checktime",
+})
+
 -- auto clear search highlight
 vim.on_key(function(char)
   if vim.fn.mode() == "n" then
@@ -297,25 +356,26 @@ vim.api.nvim_create_autocmd("VimEnter", {
 local map = vim.keymap.set
 local s = { silent = true }
 
--- file tree
 map("n", "<D-b>", ":Neotree toggle reveal<CR>", s)
+map("n", "<leader>e", ":Neotree toggle reveal<CR>", s)
 
--- git blame
 map("n", "<D-B>", ":GitBlameToggle<CR>", s)
+map("n", "<leader>gb", ":GitBlameToggle<CR>", s)
 
--- comments
 map("n", "<D-/>", function() require("Comment.api").toggle.linewise.current() end, s)
 map("v", "<D-/>", "<Esc><Cmd>lua require('Comment.api').toggle.linewise(vim.fn.visualmode())<CR>", s)
 
--- line numbers
-map("n", "<D-'>", function()
+local toggle_numbers = function()
   vim.opt.number = not vim.opt.number:get()
   vim.opt.relativenumber = not vim.opt.relativenumber:get()
-end, s)
+end
+map("n", "<D-'>", toggle_numbers, s)
+map("n", "<leader>n", toggle_numbers, s)
 
--- splits
 map("n", "<D-\\>", ":vsplit<CR>", s)
 map("n", "<D-S-\\>", ":split<CR>", s)
+map("n", "<leader>v", ":vsplit<CR>", s)
+map("n", "<leader>-", ":split<CR>", s)
 
 local function go_to_split(n)
   local wins = vim.api.nvim_tabpage_list_wins(0)
@@ -327,9 +387,13 @@ map("n", "<D-2>", function() go_to_split(2) end, s)
 map("n", "<D-3>", function() go_to_split(3) end, s)
 map("n", "<D-4>", function() go_to_split(4) end, s)
 map("n", "<D-5>", function() go_to_split(5) end, s)
+map("n", "<leader>1", function() go_to_split(1) end, s)
+map("n", "<leader>2", function() go_to_split(2) end, s)
+map("n", "<leader>3", function() go_to_split(3) end, s)
+map("n", "<leader>4", function() go_to_split(4) end, s)
+map("n", "<leader>5", function() go_to_split(5) end, s)
 
--- tab pages (each with own cwd)
-map("n", "<D-t>", function()
+local new_tab = function()
   vim.ui.input({ prompt = "Directory: ", default = "~/", completion = "dir" }, function(dir)
     if dir and dir ~= "" then
       vim.cmd("tabnew")
@@ -337,26 +401,39 @@ map("n", "<D-t>", function()
       require("alpha").start()
     end
   end)
-end, s)
+end
+map("n", "<D-t>", new_tab, s)
+map("n", "<leader>tn", new_tab, s)
 map("n", "<D-}>", ":tabnext<CR>", s)
 map("n", "<D-{>", ":tabprev<CR>", s)
+map("n", "<leader>]", ":tabnext<CR>", s)
+map("n", "<leader>[", ":tabprev<CR>", s)
 map("n", "<D-S-w>", ":tabclose<CR>", s)
+map("n", "<leader>tc", ":tabclose<CR>", s)
 
--- telescope
 map("n", "<D-p>", ":Telescope find_files<CR>", s)
 map("n", "<D-S-p>", ":Telescope commands<CR>", s)
 map("n", "<D-S-f>", ":Telescope live_grep<CR>", s)
 map("n", "<D-S-t>", ":Telescope colorscheme enable_preview=true<CR>", s)
 map("n", "<D-S-h>", function() require("spectre").open() end, s)
+map("n", "<leader>f", ":Telescope find_files<CR>", s)
+map("n", "<leader><leader>", ":Telescope find_files<CR>", s)
+map("n", "<leader>:", ":Telescope commands<CR>", s)
+map("n", "<leader>/", ":Telescope live_grep<CR>", s)
+map("n", "<leader>th", ":Telescope colorscheme enable_preview=true<CR>", s)
+map("n", "<leader>sr", function() require("spectre").open() end, s)
 
--- close buffer/split
-map("n", "<D-w>", function()
+local close_buf = function()
   local buf = vim.api.nvim_get_current_buf()
   local wins = vim.fn.win_findbuf(buf)
   if #wins > 1 then vim.cmd("close") else vim.cmd("bd") end
-end, s)
+end
+map("n", "<D-w>", close_buf, s)
+map("n", "<leader>x", close_buf, s)
 
--- lsp
+map({ "n", "i", "v" }, "<D-s>", "<Cmd>w<CR>", s)
+map("n", "<leader>w", ":w<CR>", s)
+
 map("n", "gd", function()
   local cur_file = vim.api.nvim_buf_get_name(0)
   vim.lsp.buf.definition({
@@ -369,17 +446,26 @@ map("n", "gd", function()
     end
   })
 end, s)
-map("n", "<D-k>", function()
+
+local hover_or_diag = function()
   local has_diag = #vim.diagnostic.get(0, { lnum = vim.fn.line(".") - 1 }) > 0
   if has_diag then vim.diagnostic.open_float() else vim.lsp.buf.hover() end
-end, s)
-map({ "n", "v" }, "<D-I>", function() require("conform").format({ lsp_fallback = true }) end, s)
+end
+map("n", "<D-k>", hover_or_diag, s)
+map("n", "K", hover_or_diag, s)
 
--- folding
+local format_buf = function() require("conform").format({ lsp_fallback = true }) end
+map({ "n", "v" }, "<D-I>", format_buf, s)
+map({ "n", "v" }, "<leader>lf", format_buf, s)
+
 map("n", "zR", require("ufo").openAllFolds)
 map("n", "zM", require("ufo").closeAllFolds)
 
--- natural text editing
+map("n", "]q", ":cnext<CR>", s)
+map("n", "[q", ":cprev<CR>", s)
+map("n", "]Q", ":clast<CR>", s)
+map("n", "[Q", ":cfirst<CR>", s)
+
 map("i", "<D-BS>", "<C-u>")
 map("i", "<A-BS>", "<C-w>")
 map("i", "<D-Left>", "<Home>")
@@ -387,18 +473,19 @@ map("i", "<D-Right>", "<End>")
 map("i", "<A-Left>", "<C-Left>")
 map("i", "<A-Right>", "<C-Right>")
 
--- neovide
+map({ "n", "v" }, "<D-c>", '"+y')
+map({ "n", "v" }, "<D-v>", '"+p')
+map("i", "<D-v>", '<C-r>+')
+map("c", "<D-v>", '<C-r>+')
+map("n", "<D-a>", "ggVG")
+map("n", "<leader>a", "ggVG")
+map({ "n", "v" }, "<leader>y", '"+y')
+map({ "n", "v" }, "<leader>p", '"+p')
+
 if vim.g.neovide then
   vim.g.neovide_scroll_animation_length = 0
   vim.g.neovide_cursor_animation_length = 0.03
   vim.g.neovide_cursor_trail_size = 0.3
   vim.g.neovide_text_gamma = 0.8
   vim.g.neovide_text_contrast = 0.1
-  map({ "n", "v" }, "<D-c>", '"+y')
-  map({ "n", "v" }, "<D-v>", '"+p')
-  map("i", "<D-v>", '<C-r>+')
-  map("c", "<D-v>", '<C-r>+')
-  map("n", "<D-a>", "ggVG")
-  map({ "n", "i", "v" }, "<D-s>", ":w<CR>", s)
-  map("c", "<D-s>", "<CR>", s)
 end

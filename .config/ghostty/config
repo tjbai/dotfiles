@@ -1,3 +1,4 @@
+font-family = iA Writer Mono S
 font-size = 11
 theme = Gruvbox Material Dark
 background-opacity = 0.90
@@ -17,3 +18,6 @@ keybind = cmd+shift+left_bracket=goto_split:previous
 keybind = cmd+shift+right_bracket=goto_split:next
 keybind = cmd+shift+e=equalize_splits
 selection-invert-fg-bg = true
+window-padding-x = 0
+window-padding-y = 0
+window-padding-color = extend
