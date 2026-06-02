@@ -1,8 +1,10 @@
-font-family = iA Writer Mono S
-font-size = 11
-theme = Gruvbox Material Dark
-background-opacity = 0.90
-background-blur-radius = 10
+font-family = IBM Plex Mono
+font-size = 12
+font-thicken = true
+font-thicken-strength = 110
+theme = Gruvbox Material
+background-opacity = 0.9
+background-blur-radius = 20
 cursor-style = block
 cursor-style-blink = false
 window-decoration = none

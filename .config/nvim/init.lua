@@ -35,6 +35,54 @@ vim.opt.foldmethod = "expr"
 vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.foldlevel = 99
 
+local function go_to_split(n)
+  local wins = vim.api.nvim_tabpage_list_wins(0)
+  while #wins < n do vim.cmd("vsplit") wins = vim.api.nvim_tabpage_list_wins(0) end
+  vim.cmd(n .. "wincmd w")
+end
+
+local telescope_reserved_dirs = {
+  "scratch",
+}
+
+local function telescope_find_files_reserved()
+  local builtin = require("telescope.builtin")
+  local git_root = vim.fn.system("git rev-parse --show-toplevel 2>/dev/null"):gsub("\n", "")
+
+  if git_root == "" then
+    builtin.find_files()
+    return
+  end
+
+  local search_paths = {}
+  local cwd = vim.fn.getcwd()
+  local repo_cwd = cwd:sub(1, #git_root) == git_root and cwd:sub(#git_root + 2) or ""
+
+  table.insert(search_paths, repo_cwd ~= "" and repo_cwd or ".")
+
+  for _, dir in ipairs(telescope_reserved_dirs) do
+    if vim.fn.filereadable(git_root .. "/" .. dir) == 1 or vim.fn.isdirectory(git_root .. "/" .. dir) == 1 then
+      table.insert(search_paths, dir)
+    end
+  end
+
+  local quoted_paths = {}
+  local seen = {}
+  for _, path in ipairs(search_paths) do
+    if not seen[path] then
+      seen[path] = true
+      table.insert(quoted_paths, vim.fn.shellescape(path))
+    end
+  end
+
+  local shell_cmd = "rg --files --hidden -L " .. table.concat(quoted_paths, " ")
+
+  builtin.find_files({
+    cwd = git_root,
+    find_command = { "sh", "-c", shell_cmd },
+  })
+end
+
 -- plugins
 require("lazy").setup({
   -- file tree
@@ -51,14 +99,32 @@ require("lazy").setup({
   -- telescope
   {
     "nvim-telescope/telescope.nvim",
-    dependencies = { "nvim-lua/plenary.nvim" },
-    opts = {
-      defaults = {
-        layout_strategy = "horizontal",
-        layout_config = { prompt_position = "top" },
-        sorting_strategy = "ascending",
-      },
-    },
+    dependencies = { "nvim-lua/plenary.nvim", "nvim-telescope/telescope-live-grep-args.nvim" },
+    opts = function()
+      local lga_actions = require("telescope-live-grep-args.actions")
+
+      return {
+        defaults = {
+          layout_strategy = "horizontal",
+          layout_config = { prompt_position = "top" },
+          sorting_strategy = "ascending",
+        },
+        extensions = {
+          live_grep_args = {
+            mappings = {
+              i = {
+                ["<C-k>"] = lga_actions.quote_prompt(),
+                ["<C-i>"] = lga_actions.quote_prompt({ postfix = " --iglob " }),
+              },
+            },
+          },
+        },
+      }
+    end,
+    config = function(_, opts)
+      require("telescope").setup(opts)
+      require("telescope").load_extension("live_grep_args")
+    end,
   },
 
   -- git blame
@@ -136,6 +202,24 @@ require("lazy").setup({
   -- jinja syntax (works with markdown, html, etc.)
   { "HiPhish/jinja.vim" },
 
+  -- live markdown preview in browser
+  {
+    "iamcco/markdown-preview.nvim",
+    ft = { "markdown" },
+    build = "cd app && npx --yes yarn install",
+    init = function()
+      vim.g.mkdp_auto_start = 0
+      vim.g.mkdp_auto_close = 1
+    end,
+  },
+
+  -- jupyter notebook sync to browser
+  {
+    "kiyoon/jupynium.nvim",
+    build = "pip install jupynium",
+    ft = { "python" },
+  },
+
   -- folding
   {
     "kevinhwang91/nvim-ufo",
@@ -145,6 +229,24 @@ require("lazy").setup({
         provider_selector = function() return { "treesitter", "indent" } end,
       })
     end,
+  },
+
+  -- zen mode
+  {
+    "folke/zen-mode.nvim",
+    opts = {
+      window = { width = 200, backdrop = 0.7 },
+      on_open = function()
+        for i = 1, 5 do
+          vim.keymap.del("n", "<D-" .. i .. ">")
+        end
+      end,
+      on_close = function()
+        for i = 1, 5 do
+          vim.keymap.set("n", "<D-" .. i .. ">", function() go_to_split(i) end, { silent = true })
+        end
+      end,
+    },
   },
 
   -- search/replace across files
@@ -222,16 +324,17 @@ require("lazy").setup({
 
   -- themes
   { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
-  { "folke/tokyonight.nvim" },
   { "rose-pine/neovim", name = "rose-pine" },
   { "rebelot/kanagawa.nvim" },
   { "sainnhe/gruvbox-material" },
   { "sainnhe/everforest" },
   { "EdenEast/nightfox.nvim" },
   { "navarasu/onedark.nvim" },
-  { "Mofiqul/dracula.nvim" },
-  { "bluz71/vim-nightfly-colors", name = "nightfly" },
-  { "bluz71/vim-moonfly-colors", name = "moonfly" },
+  { "projekt0n/github-nvim-theme", name = "github-theme" },
+  { "slugbyte/lackluster.nvim" },
+  { "ramojus/mellifluous.nvim" },
+
+
 
   -- start screen
   {
@@ -377,11 +480,6 @@ map("n", "<D-S-\\>", ":split<CR>", s)
 map("n", "<leader>v", ":vsplit<CR>", s)
 map("n", "<leader>-", ":split<CR>", s)
 
-local function go_to_split(n)
-  local wins = vim.api.nvim_tabpage_list_wins(0)
-  while #wins < n do vim.cmd("vsplit") wins = vim.api.nvim_tabpage_list_wins(0) end
-  vim.cmd(n .. "wincmd w")
-end
 map("n", "<D-1>", function() go_to_split(1) end, s)
 map("n", "<D-2>", function() go_to_split(2) end, s)
 map("n", "<D-3>", function() go_to_split(3) end, s)
@@ -411,15 +509,15 @@ map("n", "<leader>[", ":tabprev<CR>", s)
 map("n", "<D-S-w>", ":tabclose<CR>", s)
 map("n", "<leader>tc", ":tabclose<CR>", s)
 
-map("n", "<D-p>", ":Telescope find_files<CR>", s)
+map("n", "<D-p>", telescope_find_files_reserved, s)
 map("n", "<D-S-p>", ":Telescope commands<CR>", s)
-map("n", "<D-S-f>", ":Telescope live_grep<CR>", s)
+map("n", "<D-S-f>", function() require("telescope").extensions.live_grep_args.live_grep_args() end, s)
 map("n", "<D-S-t>", ":Telescope colorscheme enable_preview=true<CR>", s)
 map("n", "<D-S-h>", function() require("spectre").open() end, s)
-map("n", "<leader>f", ":Telescope find_files<CR>", s)
-map("n", "<leader><leader>", ":Telescope find_files<CR>", s)
+map("n", "<leader>f", telescope_find_files_reserved, s)
+map("n", "<leader><leader>", telescope_find_files_reserved, s)
 map("n", "<leader>:", ":Telescope commands<CR>", s)
-map("n", "<leader>/", ":Telescope live_grep<CR>", s)
+map("n", "<leader>/", function() require("telescope").extensions.live_grep_args.live_grep_args() end, s)
 map("n", "<leader>th", ":Telescope colorscheme enable_preview=true<CR>", s)
 map("n", "<leader>sr", function() require("spectre").open() end, s)
 
@@ -481,6 +579,78 @@ map("n", "<D-a>", "ggVG")
 map("n", "<leader>a", "ggVG")
 map({ "n", "v" }, "<leader>y", '"+y')
 map({ "n", "v" }, "<leader>p", '"+p')
+
+
+
+-- lumen: send cell to output viewer
+local function lumen_send_cell()
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local row = vim.api.nvim_win_get_cursor(0)[1]
+  local start, stop = 1, #lines
+  for i = row, 1, -1 do
+    if lines[i]:match('^# %%%%') then start = i + 1; break end
+  end
+  for i = row + 1, #lines do
+    if lines[i]:match('^# %%%%') then stop = i - 1; break end
+  end
+  local code = table.concat(vim.list_slice(lines, start, stop), '\n')
+  vim.fn.jobstart({'curl', '-s', '-X', 'POST', 'http://localhost:5500/execute',
+    '-H', 'Content-Type: application/json',
+    '-d', vim.fn.json_encode({code = code})})
+  for i = stop + 1, #lines do
+    if lines[i]:match('^# %%%%') then
+      vim.api.nvim_win_set_cursor(0, {math.min(i + 1, #lines), 0})
+      return
+    end
+  end
+end
+map("n", "<S-CR>", lumen_send_cell, s)
+
+-- format markdown table: visual select rows, then <leader>t
+local function format_md_table()
+  local s, e = vim.fn.line("'<"), vim.fn.line("'>")
+  local lines = vim.api.nvim_buf_get_lines(0, s - 1, e, false)
+  local rows = {}
+  for _, line in ipairs(lines) do
+    local stripped = line:match("^%s*|(.+)|%s*$") or line
+    local cells = {}
+    for cell in (stripped .. "|"):gmatch("(.-)|") do
+      cells[#cells + 1] = vim.trim(cell)
+    end
+    rows[#rows + 1] = cells
+  end
+  local ncols = 0
+  for _, r in ipairs(rows) do ncols = math.max(ncols, #r) end
+  local widths = {}
+  for c = 1, ncols do
+    widths[c] = 0
+    for _, r in ipairs(rows) do
+      if r[c] then widths[c] = math.max(widths[c], #r[c]) end
+    end
+  end
+  local out = {}
+  for i, r in ipairs(rows) do
+    local parts = {}
+    local is_sep = r[1] and r[1]:match("^%-+$")
+    for c = 1, ncols do
+      local cell = r[c] or ""
+      if is_sep then
+        parts[c] = string.rep("-", widths[c])
+      else
+        parts[c] = cell .. string.rep(" ", widths[c] - #cell)
+      end
+    end
+    out[i] = "| " .. table.concat(parts, " | ") .. " |"
+  end
+  vim.api.nvim_buf_set_lines(0, s - 1, e, false, out)
+end
+map("v", "<leader>t", ":<C-u>lua format_md_table()<CR>", s)
+_G.format_md_table = format_md_table
+
+vim.api.nvim_create_user_command("Md", "MarkdownPreviewToggle", {})
+vim.api.nvim_create_user_command("Ipy", "JupyniumStartAndAttachToServer", {})
+vim.cmd("cabbrev md Md")
+vim.cmd("cabbrev ipy Ipy")
 
 if vim.g.neovide then
   vim.g.neovide_scroll_animation_length = 0
