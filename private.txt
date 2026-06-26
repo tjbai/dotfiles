@@ -1,0 +1,2 @@
+# $HOME-relative files to encrypt into private/. one per line.
+.zshrc.private

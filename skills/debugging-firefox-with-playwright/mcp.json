@@ -1,0 +1,30 @@
+{
+  "playwright-firefox": {
+    "command": "npx",
+    "args": [
+      "@playwright/mcp@latest",
+      "--browser=firefox"
+    ],
+    "includeTools": [
+      "browser_navigate",
+      "browser_navigate_back",
+      "browser_navigate_forward",
+      "browser_reload",
+      "browser_snapshot",
+      "browser_click",
+      "browser_hover",
+      "browser_type",
+      "browser_fill_form",
+      "browser_press_key",
+      "browser_take_screenshot",
+      "browser_wait_for",
+      "browser_tabs",
+      "browser_evaluate",
+      "browser_run_code",
+      "browser_console_messages",
+      "browser_network_requests",
+      "browser_handle_dialog",
+      "browser_close"
+    ]
+  }
+}

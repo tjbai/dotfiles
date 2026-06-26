@@ -1,7 +1,7 @@
 {
   "icon_theme": "Zed (Default)",
   "vim_mode": true,
-  "relative_line_numbers": true,
+  "relative_line_numbers": "enabled",
   "base_keymap": "VSCode",
   "ui_font_size": 14,
   "buffer_font_size": 11,
@@ -48,8 +48,30 @@
     "include_warnings": false
   },
   "agent": {
-    "enabled": false,
-    "button": false
+    "enabled": true,
+    "button": true
+  },
+  "agent_servers": {
+    "codex-acp": {
+      "type": "registry"
+    },
+    "claude-acp": {
+      "type": "registry"
+    },
+    "devin": {
+      "type": "registry"
+    },
+    "amp-acp": {
+      "type": "registry"
+    },
+    "Devin": {
+      "type": "custom",
+      "command": "npx",
+      "args": ["tsx", "/Users/bai/dev/devin-acp/src/index.ts"],
+      "env": {
+        "DEVIN_REPOS": "auctor/auctor,auctor/sapiens"
+      }
+    }
   },
   "chat_panel": {
     "button": "never"
@@ -61,7 +83,10 @@
     "copilot_chat": null
   },
   "terminal": {
-    "button": false
+    "button": false,
+    "env": {
+      "AMP_FORCE_BEL": "1"
+    }
   },
   "tab_bar": {
     "show": true,
@@ -123,19 +148,8 @@
     "editor.document_highlight.read_background": "#00000000",
     "editor.document_highlight.write_background": "#00000000"
   },
-  "disable_ai": true,
-  "diagnostics": {
-    "button": false,
-    "include_warnings": true,
-    "inline": {
-      "enabled": true,
-      "update_debounce_ms": 150,
-      "padding": 2,
-      "min_column": 0,
-      "max_severity": "error"
-    },
-    "cargo": null
-  },
+  "disable_ai": false,
+  "cargo": null,
   "active_pane_modifiers": {
     "border_size": 0.0,
     "inactive_opacity": 1.0

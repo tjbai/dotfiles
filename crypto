@@ -1,0 +1,46 @@
+# sourced, not executed. shared password + openssl helpers.
+# caller sets $ROOT to the repo root.
+
+cipher="aes-256-cbc"
+iters="600000"
+
+loadenv() {
+  [[ -f "$ROOT/.env" ]] || return 0
+  set -a; . "$ROOT/.env"; set +a
+}
+
+password() {
+  loadenv
+  [[ -n "${DOTFILES_PASSWORD:-}" ]] && { export DOTFILES_PASSWORD; return; }
+  local p p2
+  read -r -s -p "password: " p; printf '\n'
+  if [[ "${1:-}" == confirm ]]; then
+    read -r -s -p "again: " p2; printf '\n'
+    [[ "$p" == "$p2" ]] || { echo "passwords don't match" >&2; exit 1; }
+  fi
+  [[ -n "$p" ]] || { echo "empty password" >&2; exit 1; }
+  export DOTFILES_PASSWORD="$p"
+}
+
+enc() {
+  openssl enc -"$cipher" -salt -pbkdf2 -iter "$iters" -md sha256 \
+    -pass env:DOTFILES_PASSWORD "$@"
+}
+
+private() {
+  [[ -f "$ROOT/private.txt" ]] || return
+  sed -E 's/[[:space:]]+#.*$//; s/^[[:space:]]+//; s/[[:space:]]+$//' "$ROOT/private.txt" \
+    | sed '/^#/d; /^$/d'
+}
+
+public() {
+  [[ -f "$ROOT/public.txt" ]] || return
+  sed -E 's/[[:space:]]+#.*$//; s/^[[:space:]]+//; s/[[:space:]]+$//' "$ROOT/public.txt" \
+    | sed '/^#/d; /^$/d'
+}
+
+skillsrc() {
+  if [[ -n "${AGENT_SKILLS_DIR:-}" ]]; then printf '%s\n' "$AGENT_SKILLS_DIR"
+  elif [[ -d "$HOME/.config/agent/skills" ]]; then printf '%s\n' "$HOME/.config/agent/skills"
+  else printf '%s\n' "$HOME/.config/agents/skills"; fi
+}

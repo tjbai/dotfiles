@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$ROOT/crypto"
+shopt -s nullglob
+
+# plaintext configs
+rm -f "$ROOT/.zshrc"
+rm -rf "$ROOT/.config/zed" "$ROOT/.config/nvim" "$ROOT/.config/neovide" "$ROOT/.config/ghostty"
+cp ~/.zshrc "$ROOT/.zshrc"
+mkdir -p "$ROOT/.config/zed" && cp ~/.config/zed/settings.json "$ROOT/.config/zed/settings.json"
+mkdir -p "$ROOT/.config/nvim" && cp -r ~/.config/nvim/* "$ROOT/.config/nvim/"
+mkdir -p "$ROOT/.config/neovide" && cp -r ~/.config/neovide/* "$ROOT/.config/neovide/"
+mkdir -p "$ROOT/.config/ghostty" && cp -r ~/.config/ghostty/* "$ROOT/.config/ghostty/"
+
+password confirm
+
+# skills: names always public. content public only if listed in public.txt,
+# otherwise encrypted to skills/<name>.enc.
+src="$(skillsrc)"
+mkdir -p "$ROOT/skills"
+pub=" $(public | tr '\n' ' ')"
+keep=" "
+for dir in "$src"/*/; do
+  name="$(basename "$dir")"
+  keep+="$name "
+  if [[ "$pub" == *" $name "* ]]; then
+    rm -f "$ROOT/skills/$name.enc"
+    rm -rf "$ROOT/skills/$name"
+    cp -R "$dir" "$ROOT/skills/$name"
+    echo "public: $name"
+    continue
+  fi
+  rm -rf "$ROOT/skills/$name"
+  out="$ROOT/skills/$name.enc"
+  if [[ -f "$out" ]]; then
+    old="$(mktemp -d)"
+    if enc -d -in "$out" 2>/dev/null | tar -xzf - -C "$old" 2>/dev/null \
+       && diff -qr "$old/$name" "$dir" >/dev/null 2>&1; then
+      rm -rf "$old"; continue
+    fi
+    rm -rf "$old"
+  fi
+  tar -czf - -C "$src" "$name" | enc -e -out "$out"
+  echo "encrypted: $name"
+done
+for out in "$ROOT/skills"/*.enc; do
+  name="$(basename "$out" .enc)"
+  [[ "$keep" == *" $name "* ]] || { rm -f "$out"; echo "dropped: $name"; }
+done
+for d in "$ROOT/skills"/*/; do
+  name="$(basename "$d")"
+  [[ "$keep" == *" $name "* ]] || { rm -rf "$d"; echo "dropped: $name"; }
+done
+
+# private files
+mkdir -p "$ROOT/private"
+while IFS= read -r path; do
+  [[ -f ~/"$path" ]] || { echo "missing: ~/$path" >&2; continue; }
+  out="$ROOT/private/$path.enc"
+  if [[ -f "$out" ]] && enc -d -in "$out" 2>/dev/null | cmp -s - ~/"$path"; then
+    continue
+  fi
+  mkdir -p "$(dirname "$out")"
+  enc -e -in ~/"$path" -out "$out"
+  echo "private: $path"
+done < <(private)

@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$ROOT/crypto"
+shopt -s nullglob
+
+# plaintext configs
+cp "$ROOT/.zshrc" ~/.zshrc
+mkdir -p ~/.config/zed ~/.config/nvim ~/.config/neovide ~/.config/ghostty
+cp "$ROOT/.config/zed/settings.json" ~/.config/zed/settings.json
+cp -r "$ROOT/.config/nvim/." ~/.config/nvim/
+cp -r "$ROOT/.config/neovide/." ~/.config/neovide/
+cp -r "$ROOT/.config/ghostty/." ~/.config/ghostty/
+
+password
+
+# skills: plaintext dirs copied, encrypted ones decrypted
+dst=~/.config/agents/skills
+mkdir -p "$dst"
+for d in "$ROOT/skills"/*/; do
+  name="$(basename "$d")"
+  rm -rf "$dst/$name"
+  cp -R "$d" "$dst/$name"
+  echo "public: $name"
+done
+for f in "$ROOT/skills"/*.enc; do
+  name="$(basename "$f" .enc)"
+  rm -rf "$dst/$name"
+  if ! enc -d -in "$f" 2>/dev/null | tar -xzf - -C "$dst"; then
+    echo "failed to decrypt $name — wrong password?" >&2; exit 1
+  fi
+  echo "encrypted: $name"
+done
+
+# private files
+while IFS= read -r path; do
+  f="$ROOT/private/$path.enc"
+  [[ -f "$f" ]] || { echo "missing: $f" >&2; continue; }
+  mkdir -p "$(dirname ~/"$path")"
+  if ! enc -d -in "$f" -out ~/"$path" 2>/dev/null; then
+    echo "failed to decrypt $path — wrong password?" >&2; exit 1
+  fi
+  chmod 600 ~/"$path" || true
+  echo "private: $path"
+done < <(private)

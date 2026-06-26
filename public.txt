@@ -1,0 +1,18 @@
+# skills whose content is safe to publish in full (plaintext, name + content).
+# everything else is encrypted to skills/<name>.enc — name public, content hidden.
+# rule: anything that reveals work stays off this list.
+composition-patterns
+datadog
+debugging-firefox-with-playwright
+deploy-to-vercel
+linear
+react-best-practices
+react-native-skills
+react-view-transitions
+sentry
+using-railway-api
+vercel-cli-with-tokens
+vercel-optimize
+web-design-guidelines
+writing-guidelines
+writing-unwrapped-prose
