@@ -7,8 +7,12 @@ debugging-firefox-with-playwright
 linear
 react-best-practices
 react-view-transitions
+removing-python-slop
+running-zsh-aliases
 sentry
 using-railway-api
 web-design-guidelines
+writing-commits
 writing-guidelines
+writing-pr-descriptions
 writing-unwrapped-prose
