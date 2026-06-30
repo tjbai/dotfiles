@@ -26,6 +26,12 @@ This is the <feature / slice / fix> <optionally: stacked on top of / pulled out 
 
 <If relevant, state rollout status, dogfooding intent, or feature-gate context.>
 
+## ELI5
+
+<One short paragraph describing the relevant behavior as it works today, in plain language a non-expert could follow.>
+
+<One or two short paragraphs describing how the behavior changes after this PR. Frame it as the question the system now asks and what happens for each answer, including the important edge cases. Avoid implementation jargon; use product/runtime terms.>
+
 ## Screenshots
 
 ### <Screenshot name>
@@ -91,6 +97,14 @@ Notes:
 - Name the branch's scope and the important tradeoff.
 - Explain the user/product/runtime shape in plain language.
 - Mention stacking, rollout path, or dogfooding status when relevant.
+
+### ELI5
+
+- Write for a non-expert: explain the behavior before and after this PR in plain language.
+- Start with how it works today, then what changes after this PR.
+- Frame the change as the question the system now asks and what happens for each answer (yes / no / inactive), including the important edge cases.
+- Use product/runtime terms, not code symbols or implementation mechanics.
+- Keep it short: a "today" paragraph plus one or two "after this PR" paragraphs.
 
 ### What changed
 

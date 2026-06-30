@@ -410,21 +410,16 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 -- lsp (native neovim 0.11)
 vim.lsp.enable('basedpyright')
 vim.lsp.enable('lua_ls')
-vim.lsp.config('vtsls', {
+vim.lsp.config('tsgo', {
   settings = {
     typescript = {
       preferences = {
         includePackageJsonAutoImports = "off",
       },
     },
-    vtsls = {
-      tsserver = {
-        maxTsServerMemory = 12288, -- node tsserver heap cap (MB); honored by vtsls
-      },
-    },
   },
 })
-vim.lsp.enable('vtsls')
+vim.lsp.enable('tsgo')
 
 -- diagnostics
 vim.diagnostic.config({
