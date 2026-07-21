@@ -21,6 +21,8 @@ keybind = cmd+backspace=text:\x15
 keybind = cmd+shift+left_bracket=goto_split:previous
 keybind = cmd+shift+right_bracket=goto_split:next
 keybind = cmd+shift+e=equalize_splits
+keybind = cmd+alt+left=previous_tab
+keybind = cmd+alt+right=next_tab
 selection-invert-fg-bg = true
 window-padding-x = 0
 window-padding-y = 0
