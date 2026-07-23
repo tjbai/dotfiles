@@ -32,6 +32,31 @@ for f in "$ROOT/skills"/*.enc; do
   echo "encrypted: $name"
 done
 
+# firefox: restore bookmarks + search shortcuts. needs firefox closed so it
+# doesn't clobber the files on quit. bookmarks import once on next launch.
+if pgrep -xq firefox; then
+  echo "firefox is running — quit it and re-run ./install to restore bookmarks" >&2
+elif ffdir="$(ffprofile)"; then
+  if [[ -f "$ROOT/firefox/bookmarks.html.enc" ]]; then
+    if ! enc -d -in "$ROOT/firefox/bookmarks.html.enc" -out "$ffdir/bookmarks.html" 2>/dev/null; then
+      echo "failed to decrypt bookmarks — wrong password?" >&2; exit 1
+    fi
+    impref='user_pref("browser.places.importBookmarksHTML", true);'
+    grep -qsF "$impref" "$ffdir/prefs.js" || printf '%s\n' "$impref" >> "$ffdir/prefs.js"
+    echo "firefox: bookmarks (import on next launch)"
+  fi
+  if [[ -f "$ROOT/firefox/search.json.mozlz4.enc" ]]; then
+    if ! enc -d -in "$ROOT/firefox/search.json.mozlz4.enc" -out "$ffdir/search.json.mozlz4" 2>/dev/null; then
+      echo "failed to decrypt search shortcuts — wrong password?" >&2; exit 1
+    fi
+    echo "firefox: search shortcuts"
+  fi
+  autopref='user_pref("browser.bookmarks.autoExportHTML", true);'
+  grep -qsF "$autopref" "$ffdir/user.js" || printf '%s\n' "$autopref" >> "$ffdir/user.js"
+else
+  echo "firefox: no profile — open firefox once, quit it, re-run ./install" >&2
+fi
+
 # private files
 while IFS= read -r path; do
   f="$ROOT/private/$path.enc"

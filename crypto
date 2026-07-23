@@ -39,6 +39,17 @@ public() {
     | sed '/^#/d; /^$/d'
 }
 
+ffprofile() {
+  local base="$HOME/Library/Application Support/Firefox" rel d
+  [[ -f "$base/profiles.ini" ]] || return 1
+  rel="$(awk -F= '/^\[Install/{f=1} f && /^Default=/{print $2; exit}' "$base/profiles.ini")"
+  [[ -n "$rel" && -d "$base/$rel" ]] && { printf '%s\n' "$base/$rel"; return; }
+  for d in "$base"/Profiles/*.default-release "$base"/Profiles/*.default; do
+    [[ -d "$d" ]] && { printf '%s\n' "$d"; return; }
+  done
+  return 1
+}
+
 skillsrc() {
   if [[ -n "${AGENT_SKILLS_DIR:-}" ]]; then printf '%s\n' "$AGENT_SKILLS_DIR"
   elif [[ -d "$HOME/.config/agent/skills" ]]; then printf '%s\n' "$HOME/.config/agent/skills"

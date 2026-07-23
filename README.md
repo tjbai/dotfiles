@@ -1,4 +1,4 @@
-a hypebeast's dotfiles: zsh, nvim, neovide, zed, ghostty, skills.
+a hypebeast's dotfiles: zsh, nvim, neovide, zed, ghostty, firefox, skills.
 
 ## how it works
 
@@ -11,6 +11,13 @@ skills always keep their names. the generic ones listed in `public.txt` get publ
 in full (plaintext dir under `skills/<name>`). everything else — anything that reveals
 work — becomes `skills/<name>.enc`: name visible, content encrypted. flip a skill
 between the two by adding/removing it from `public.txt`.
+
+firefox: `./update` flips `browser.bookmarks.autoExportHTML` in the profile's
+`user.js`, so firefox rewrites `bookmarks.html` (bookmarks + keyword shortcuts) on
+every quit; update encrypts that plus `search.json.mozlz4` (search engine shortcuts)
+into `firefox/`. `./install` decrypts them back and sets the one-shot import pref, so
+bookmarks appear on next launch. firefox must be closed during install. first-ever
+export needs one firefox restart after running update.
 
 private files are listed in `private.txt` and encrypted into `private/`. today that's
 just `~/.zshrc.private`, which my public `.zshrc` sources at the end (keeps the
@@ -38,6 +45,7 @@ public.txt    skills safe to publish in full (everything else is encrypted)
 private.txt   $HOME-relative files to encrypt
 skills/       skills — <name>/ plaintext if public, <name>.enc if not
 private/      encrypted private files
+firefox/      encrypted bookmarks + search shortcuts
 .config/      plaintext configs
 ```
 

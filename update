@@ -53,6 +53,30 @@ for d in "$ROOT/skills"/*/; do
   [[ "$keep" == *" $name "* ]] || { rm -rf "$d"; echo "dropped: $name"; }
 done
 
+# firefox: bookmarks + search shortcuts, encrypted (they reveal work).
+# browser.bookmarks.autoExportHTML makes firefox write bookmarks.html on
+# every quit; first run needs a firefox restart before there's anything to grab.
+if ffdir="$(ffprofile)"; then
+  autopref='user_pref("browser.bookmarks.autoExportHTML", true);'
+  if ! grep -qsF "$autopref" "$ffdir/user.js"; then
+    printf '%s\n' "$autopref" >> "$ffdir/user.js"
+    echo "firefox: enabled bookmark export — restart firefox, then re-run ./update"
+  fi
+  mkdir -p "$ROOT/firefox"
+  for f in bookmarks.html search.json.mozlz4; do
+    src="$ffdir/$f"
+    [[ -f "$src" ]] || { echo "firefox: no $f yet (quit firefox to generate)" >&2; continue; }
+    out="$ROOT/firefox/$f.enc"
+    if [[ -f "$out" ]] && enc -d -in "$out" 2>/dev/null | cmp -s - "$src"; then
+      continue
+    fi
+    enc -e -in "$src" -out "$out"
+    echo "firefox: $f"
+  done
+else
+  echo "firefox: no profile found, skipping" >&2
+fi
+
 # private files
 mkdir -p "$ROOT/private"
 while IFS= read -r path; do
