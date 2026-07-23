@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TITLE -- sentence case, plain language</title>
+<style>
+  @import "https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap";
+  body { font-family: "Inter", system-ui, sans-serif; font-size: .875em; color: #444;
+         background: #e8e8e8; max-width: 760px; margin: auto; padding: 20px; line-height: 1.6;
+         font-variant-ligatures: none; font-feature-settings: "calt" 0, "liga" 0; }
+  h1 { font-size: 1.5em; font-weight: 500; color: #222; letter-spacing: -.01em; }
+  h2 { font-size: 1.15em; font-weight: 500; color: #222; margin: 2.2em 0 .3em; }
+  a { color: #3273dc; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  b, strong { color: #222; font-weight: 600; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9em;
+         background: #f2f2f2; padding: .1em .35em; border-radius: 3px; color: #222; }
+  pre { background: #f2f2f2; color: #222; padding: 10px 14px; border-radius: 3px; overflow-x: auto;
+        font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8em; line-height: 1.55; }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  .who { color: #777; font-size: .9em; margin: 0 0 .6em; }
+  .add { color: #2f7d32; }
+  .del { color: #b00020; text-decoration: line-through; }
+  .cm  { color: #888; }
+  mark { background: #fff3a3; padding: 0 2px; }
+  svg text { font-family: "Inter", system-ui, sans-serif; }
+  hr { border: 0; border-top: 1px dashed #999; margin: 2.5em 0; }
+</style>
+</head>
+<body>
+
+<h1>TITLE -- sentence case, plain language</h1>
+
+<p><a href="PR_OR_REPO_URL">PR #NNN</a>, <code>path/to/subsystem/</code>.
+One-paragraph intro: name the single invariant that tames the system, name the trick,
+mark the tracked artifact with <mark>its-literal-form</mark>. End with the legend:
+each hop shows what changed (<span class="add">+ added</span>, <span class="del">- removed</span>).</p>
+
+<!--
+  SVG diagram conventions:
+  - boxes: class bx (#f2f2f2 fill, #999 stroke); title class t (12px), subtitle class st (10.5px)
+  - title baseline ~22-25px below box top; subtitle lines 16-20px apart
+  - vertical gap between box rows: 40-55px minimum
+  - arrows: class fl, routed through gutters, NEVER through a box; long returns go around the outside
+  - numbered circles: class nm, on the arrow midpoint, wrapped in <a href="#sN">
+  - size viewBox to content, no dead space
+  - ASCII only in labels: use "--", "->", "+", ","
+-->
+<svg viewBox="0 0 760 215" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#888"/>
+    </marker>
+  </defs>
+  <style>
+    .bx { fill: #f2f2f2; stroke: #999; }
+    .t  { font-size: 12px; fill: #222; }
+    .st { font-size: 10.5px; fill: #777; }
+    .fl { fill: none; stroke: #888; stroke-width: 1.2; marker-end: url(#arr); }
+    .nm circle { fill: #e8e8e8; stroke: #888; }
+    .nm text { font-size: 10.5px; fill: #3273dc; text-anchor: middle; dominant-baseline: central; }
+  </style>
+
+  <rect class="bx" x="180" y="8" width="360" height="56"/>
+  <text class="t" x="196" y="32">stage one -- the source of truth</text>
+  <text class="st" x="196" y="50">one clause of context, comma separated</text>
+
+  <rect class="bx" x="180" y="148" width="360" height="56"/>
+  <text class="t" x="196" y="172">stage two (patched)</text>
+  <text class="st" x="196" y="190">what this box subtracts or adds</text>
+
+  <path class="fl" d="M 360 64 L 360 148"/>
+
+  <a href="#s1"><g class="nm"><circle cx="360" cy="106" r="9"/><text x="360" y="107">1</text></g></a>
+</svg>
+
+<p>Running example setup: one small, concrete scenario that exercises every stage.
+The same example flows through the whole page.</p>
+
+<h2 id="s1">1. Sentence-case hop title -- what this hop means</h2>
+<p class="who"><code>function_name</code> in <code>path/to/file.py</code> -- one clause of context</p>
+<p>Contract prose, 1-4 sentences: what shape goes in, what comes out, what is guarded,
+what breaks if you reorder it. Say what is lost and why that is a tradeoff, not a bug.</p>
+<pre>{
+  "unchanged_field": "value",
+<span class="del">  "removed_by_this_stage": true,</span>
+<span class="add">  "added_by_this_stage": <mark>"tracked-artifact"</mark>,   <span class="cm">// why, in six words</span></span>
+  "elided": [ ...unchanged from 1 ]
+}</pre>
+
+<hr>
+
+<p><b>Cross-cutting concern one.</b> Concurrency model, gating, or whatever spans all hops.
+Bold lead-in phrase, no header, 2-4 sentences.</p>
+
+<p><b>The failure story.</b> What happens when any hop gets corrupt input, and why the
+worst case is acceptable. Every good explainer ends by naming the degraded mode.</p>
+
+</body>
+</html>
