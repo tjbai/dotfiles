@@ -1,6 +1,6 @@
 ---
-name: building-html-explainers
-description: "Builds single-file HTML explainers for hard code: minimal tjbai-style page, clickable SVG pipeline diagram, one mock payload evolving stage by stage with diff marks. Use when asked for an HTML explainer, a visual deep-dive of a PR or subsystem, or to help the user grok hard code beyond plain text, PR descriptions, or mermaid diagrams."
+name: explain-like-im-chud
+description: "Builds single-file HTML explainers for hard code: minimal tjbai-style page, clickable SVG pipeline diagram, one mock payload evolving stage by stage with diff marks. Use when asked to \"explain like I'm chud\", for an \"HTML explainer\", a visual deep-dive of a PR or subsystem, or to help the user grok hard code beyond plain text, PR descriptions, or mermaid diagrams."
 ---
 
 # Building HTML Explainers
