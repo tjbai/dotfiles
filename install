@@ -12,6 +12,12 @@ cp -r "$ROOT/.config/nvim/." ~/.config/nvim/
 cp -r "$ROOT/.config/neovide/." ~/.config/neovide/
 cp -r "$ROOT/.config/ghostty/." ~/.config/ghostty/
 
+# amp: install the cli if missing, then restore settings + plugins
+command -v amp >/dev/null || curl -fsSL https://ampcode.com/install.sh | bash
+mkdir -p ~/.config/amp/plugins
+cp "$ROOT/.config/amp/settings.json" ~/.config/amp/settings.json
+cp -r "$ROOT/.config/amp/plugins/." ~/.config/amp/plugins/
+
 password
 
 # skills: plaintext dirs copied, encrypted ones decrypted
@@ -37,16 +43,16 @@ done
 if pgrep -xq firefox; then
   echo "firefox is running — quit it and re-run ./install to restore bookmarks" >&2
 elif ffdir="$(ffprofile)"; then
-  if [[ -f "$ROOT/firefox/bookmarks.html.enc" ]]; then
-    if ! enc -d -in "$ROOT/firefox/bookmarks.html.enc" -out "$ffdir/bookmarks.html" 2>/dev/null; then
+  if [[ -f "$ROOT/vault/firefox/bookmarks.html.enc" ]]; then
+    if ! enc -d -in "$ROOT/vault/firefox/bookmarks.html.enc" -out "$ffdir/bookmarks.html" 2>/dev/null; then
       echo "failed to decrypt bookmarks — wrong password?" >&2; exit 1
     fi
     impref='user_pref("browser.places.importBookmarksHTML", true);'
     grep -qsF "$impref" "$ffdir/prefs.js" || printf '%s\n' "$impref" >> "$ffdir/prefs.js"
     echo "firefox: bookmarks (import on next launch)"
   fi
-  if [[ -f "$ROOT/firefox/search.json.mozlz4.enc" ]]; then
-    if ! enc -d -in "$ROOT/firefox/search.json.mozlz4.enc" -out "$ffdir/search.json.mozlz4" 2>/dev/null; then
+  if [[ -f "$ROOT/vault/firefox/search.json.mozlz4.enc" ]]; then
+    if ! enc -d -in "$ROOT/vault/firefox/search.json.mozlz4.enc" -out "$ffdir/search.json.mozlz4" 2>/dev/null; then
       echo "failed to decrypt search shortcuts — wrong password?" >&2; exit 1
     fi
     echo "firefox: search shortcuts"
@@ -57,9 +63,29 @@ else
   echo "firefox: no profile — open firefox once, quit it, re-run ./install" >&2
 fi
 
+# raycast: install if missing, then hand the config to raycast for import.
+# import is interactive — raycast asks for its own export passphrase
+# (separate from the dotfiles password) and shows a category checklist.
+if [[ ! -d /Applications/Raycast.app && ! -d ~/Applications/Raycast.app ]]; then
+  if command -v brew >/dev/null; then
+    brew install --cask raycast
+    echo "raycast: installed"
+  else
+    echo "raycast: no homebrew — install raycast manually, then re-run ./install" >&2
+  fi
+fi
+if [[ -f "$ROOT/vault/raycast/raycast.rayconfig.enc" ]]; then
+  raycfg=~/Downloads/dotfiles-restore.rayconfig
+  if ! enc -d -in "$ROOT/vault/raycast/raycast.rayconfig.enc" -out "$raycfg" 2>/dev/null; then
+    echo "failed to decrypt raycast config — wrong password?" >&2; exit 1
+  fi
+  open "$raycfg" 2>/dev/null || true
+  echo "raycast: import opened — enter raycast's export passphrase, then delete $raycfg"
+fi
+
 # private files
 while IFS= read -r path; do
-  f="$ROOT/private/$path.enc"
+  f="$ROOT/vault/private/$path.enc"
   [[ -f "$f" ]] || { echo "missing: $f" >&2; continue; }
   mkdir -p "$(dirname ~/"$path")"
   if ! enc -d -in "$f" -out ~/"$path" 2>/dev/null; then

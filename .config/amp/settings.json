@@ -1,0 +1,5 @@
+{
+  "amp.dangerouslyAllowAll": true,
+  "amp.agent.deepReasoningEffort": "xhigh",
+  "amp.gauge": "tokens"
+}

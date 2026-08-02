@@ -6,12 +6,21 @@ shopt -s nullglob
 
 # plaintext configs
 rm -f "$ROOT/.zshrc"
-rm -rf "$ROOT/.config/zed" "$ROOT/.config/nvim" "$ROOT/.config/neovide" "$ROOT/.config/ghostty"
+rm -rf "$ROOT/.config/zed" "$ROOT/.config/nvim" "$ROOT/.config/neovide" "$ROOT/.config/ghostty" "$ROOT/.config/amp"
 cp ~/.zshrc "$ROOT/.zshrc"
 mkdir -p "$ROOT/.config/zed" && cp ~/.config/zed/settings.json "$ROOT/.config/zed/settings.json"
 mkdir -p "$ROOT/.config/nvim" && cp -r ~/.config/nvim/* "$ROOT/.config/nvim/"
 mkdir -p "$ROOT/.config/neovide" && cp -r ~/.config/neovide/* "$ROOT/.config/neovide/"
 mkdir -p "$ROOT/.config/ghostty" && cp -r ~/.config/ghostty/* "$ROOT/.config/ghostty/"
+
+# amp: settings + hand-written plugins. plugins amp auto-updates from
+# ampcode.com (marked on line 1) restore themselves, so they stay out.
+mkdir -p "$ROOT/.config/amp/plugins"
+cp ~/.config/amp/settings.json "$ROOT/.config/amp/settings.json"
+for f in ~/.config/amp/plugins/*.ts ~/.config/amp/plugins/*.js; do
+  head -1 "$f" | grep -qF '@amp-plugin updated automatically' && continue
+  cp "$f" "$ROOT/.config/amp/plugins/"
+done
 
 password confirm
 
@@ -62,11 +71,11 @@ if ffdir="$(ffprofile)"; then
     printf '%s\n' "$autopref" >> "$ffdir/user.js"
     echo "firefox: enabled bookmark export — restart firefox, then re-run ./update"
   fi
-  mkdir -p "$ROOT/firefox"
+  mkdir -p "$ROOT/vault/firefox"
   for f in bookmarks.html search.json.mozlz4; do
     src="$ffdir/$f"
     [[ -f "$src" ]] || { echo "firefox: no $f yet (quit firefox to generate)" >&2; continue; }
-    out="$ROOT/firefox/$f.enc"
+    out="$ROOT/vault/firefox/$f.enc"
     if [[ -f "$out" ]] && enc -d -in "$out" 2>/dev/null | cmp -s - "$src"; then
       continue
     fi
@@ -77,11 +86,30 @@ else
   echo "firefox: no profile found, skipping" >&2
 fi
 
+# raycast: settings export (.rayconfig), re-encrypted with our password.
+# raycast has no headless export — run "Export Settings & Data" in raycast
+# (or: open 'raycast://extensions/raycast/raycast/export-settings-data'),
+# save to ~/Downloads or ~/Desktop, then re-run ./update.
+newest=""
+for f in ~/Downloads/*.rayconfig ~/Desktop/*.rayconfig; do
+  [[ -z "$newest" || "$f" -nt "$newest" ]] && newest="$f"
+done
+if [[ -n "$newest" ]]; then
+  mkdir -p "$ROOT/vault/raycast"
+  out="$ROOT/vault/raycast/raycast.rayconfig.enc"
+  if ! { [[ -f "$out" ]] && enc -d -in "$out" 2>/dev/null | cmp -s - "$newest"; }; then
+    enc -e -in "$newest" -out "$out"
+    echo "raycast: $(basename "$newest")"
+  fi
+elif [[ ! -f "$ROOT/vault/raycast/raycast.rayconfig.enc" ]]; then
+  echo "raycast: no .rayconfig found — run 'Export Settings & Data' in raycast, then re-run ./update" >&2
+fi
+
 # private files
-mkdir -p "$ROOT/private"
+mkdir -p "$ROOT/vault/private"
 while IFS= read -r path; do
   [[ -f ~/"$path" ]] || { echo "missing: ~/$path" >&2; continue; }
-  out="$ROOT/private/$path.enc"
+  out="$ROOT/vault/private/$path.enc"
   if [[ -f "$out" ]] && enc -d -in "$out" 2>/dev/null | cmp -s - ~/"$path"; then
     continue
   fi
