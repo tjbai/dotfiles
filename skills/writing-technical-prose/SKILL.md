@@ -50,6 +50,7 @@ Do not write in engineering-blog voice: the register that signals seniority inst
 | banned | write instead |
 | --- | --- |
 | seam, surface area, shape (as a design noun), primitive, escape hatch, footgun, sharp edge | Name the concrete thing: the two components and their boundary, the list of endpoints, the actual risk and where it lives. |
+| slice, workstream, vertical (as work nouns), "This is the X slice of Y" | Name what the change does: the behavior added or the components changed. Never introduce work by its position in a plan or taxonomy. |
 | the key insight, the real question, at its core, fundamentally, the story here, this unlocks | Delete the frame. State the fact it was introducing. |
 | elegant, clean, robust, powerful, seamless, battle-tested, first-class, best-in-class | State the checkable property: "retries on failure", "no manual steps", "one code path". |
 | leverage, delve, journey, landscape, ecosystem, north star, bet (as a design noun) | Use the plain verb or noun: "use", "read", "the other services", "the goal". |

@@ -7,7 +7,7 @@ description: Writes detailed pull request descriptions using the team's preferre
 
 Use this skill when creating or rewriting a pull request body for the team.
 
-The preferred PR description style is a narrative, reviewer-friendly template with a concise summary first, then structured detail. It should explain what changed, why the shape is coherent, what reviewers should watch, what is intentionally out of scope, and how the change was validated.
+The preferred PR description style is a narrative, reviewer-friendly template with a concise summary first, then structured detail. It should explain what changed, why the changes belong together in one PR, what reviewers should watch, what is intentionally out of scope, and how the change was validated.
 
 ## Workflow
 
@@ -22,7 +22,7 @@ The preferred PR description style is a narrative, reviewer-friendly template wi
 ```markdown
 ## Summary
 
-This is the <feature / slice / fix> <optionally: stacked on top of / pulled out of / scoped to> <context>. <One or two paragraphs describing the product/runtime shape, why this branch exists, and the guiding tradeoff.>
+<Open with what the PR does: the behavior it adds or changes, stated as a plain fact. Then one or two paragraphs: why this branch exists, what it deliberately trades off, and stacking context when relevant.>
 
 <If relevant, state rollout status, dogfooding intent, or feature-gate context.>
 
@@ -93,9 +93,9 @@ Notes:
 
 ### Summary
 
-- Start with the slice identity: "This is the X slice..." or "This PR makes Y...".
+- Open with what the PR does: "<Subject> now <behavior>" or "This PR makes Y...". Describe the change itself, never its position in a plan or taxonomy.
 - Name the branch's scope and the important tradeoff.
-- Explain the user/product/runtime shape in plain language.
+- Explain the resulting user/product/runtime behavior in plain language.
 - Mention stacking, rollout path, or dogfooding status when relevant.
 
 ### ELI5
@@ -154,6 +154,17 @@ gh api repos/OWNER/REPO/pulls/PR_NUMBER -X PATCH -F body="$(cat /tmp/pr-body.md)
 ```
 
 ## Style notes
+
+### Banned openers and words
+
+The `writing-technical-prose` skill's banned register applies to every section. These PR-specific bans come on top of it:
+
+- Never write "slice" (or "workstream", "vertical", "piece of the puzzle") to describe a PR. Say what the PR adds or changes.
+- Never open the Summary with "This is the X of Y". Lead with the change: "Long chat sessions now compact their context mid-turn" beats "This is the compaction slice of the chat workstream".
+- No "the guiding tradeoff" / "the key decision" framing. State the tradeoff directly: "Bounded initial payloads, at the cost of a second fetch on scrollback."
+- No "shape" as a design noun ("the runtime shape", "the shape is coherent"). Name the behavior or the components.
+
+### General
 
 - Prefer concrete bullets over vague summaries.
 - Keep reviewer-facing details high signal: behavior, contracts, risks, validation.
