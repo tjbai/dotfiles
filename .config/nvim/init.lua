@@ -408,6 +408,10 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 })
 
 -- lsp (native neovim 0.11)
+-- use the uv-tool basedpyright (shared with Zed) instead of a separate mason install
+vim.lsp.config('basedpyright', {
+  cmd = { vim.fn.expand('~/.local/bin/basedpyright-langserver'), '--stdio' },
+})
 vim.lsp.enable('basedpyright')
 vim.lsp.enable('lua_ls')
 vim.lsp.config('tsgo', {

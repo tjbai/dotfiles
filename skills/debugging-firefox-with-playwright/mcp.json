@@ -1,10 +1,6 @@
 {
   "playwright-firefox": {
-    "command": "npx",
-    "args": [
-      "@playwright/mcp@latest",
-      "--browser=firefox"
-    ],
+    "url": "http://127.0.0.1:8931/mcp",
     "includeTools": [
       "browser_navigate",
       "browser_navigate_back",

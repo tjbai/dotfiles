@@ -17,6 +17,13 @@ Use the bundled Playwright MCP tools when a live Firefox browser is the fastest 
 
 ## Workflow
 
+0. Ensure the shared Playwright MCP server is running before using any browser tool. Check with `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8931/mcp`; any HTTP response means it is up. If the connection is refused, start it in the background and wait for it to accept connections:
+
+   ```bash
+   nohup npx @playwright/mcp@latest --browser=firefox --port 8931 > /tmp/playwright-mcp.log 2>&1 &
+   for i in $(seq 1 20); do curl -s -o /dev/null http://127.0.0.1:8931/mcp && break; sleep 0.5; done
+   ```
+
 1. Start with `browser_navigate` or `browser_tabs` to open the target page.
 2. Use `browser_snapshot` before interacting so element refs stay deterministic.
 3. Use `browser_console_messages`, `browser_network_requests`, and `browser_evaluate` to root-cause issues instead of inferring from appearance alone.

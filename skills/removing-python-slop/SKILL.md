@@ -1,6 +1,6 @@
 ---
 name: removing-python-slop
-description: Removes Python slop: over-defensive code, redundant parsing, unnecessary helpers, logger/error ceremony, and style cruft. Use when cleaning code that feels defensive, complex, abstracted, verbose, or distrustful of owned contracts.
+description: "Removes Python slop: over-defensive code, redundant parsing, unnecessary helpers, logger/error ceremony, and style cruft. Use when cleaning code that feels defensive, complex, abstracted, verbose, or distrustful of owned contracts."
 ---
 
 # Removing Python Slop
