@@ -23,6 +23,65 @@ for f in ~/.config/amp/plugins/*.ts ~/.config/amp/plugins/*.js; do
   cp "$f" "$ROOT/.config/amp/plugins/"
 done
 
+# amp publish: mirror local skills + plugins into the amp user repos
+# (ampcode.com git), which every amp session — this machine, runners, fresh
+# orbs — syncs from. local is the source of truth: skills/plugins that exist
+# only in the amp repo get deleted here. skills land under their frontmatter
+# name (the repo requires dir name == name); dirs without SKILL.md are
+# skipped. plugins mirror everything local, auto-updated ones included, since
+# orbs have no other way to get them. needs no password; skipped quietly
+# when amp is missing or unauthenticated.
+amprepo() { # amprepo <clone-dir> <url> — fresh checkout of origin/main
+  if [[ ! -d "$1/.git" ]]; then
+    git init -q -b main "$1"
+    git -C "$1" config credential.helper '!amp git-credential-helper'
+    git -C "$1" remote add origin "$2"
+  fi
+  git -C "$1" fetch -q origin main && git -C "$1" reset -q --hard origin/main
+}
+amppush() { # amppush <clone-dir> <message>
+  git -C "$1" add -A
+  git -C "$1" diff --cached --quiet && return 0
+  git -C "$1" commit -q -m "$2"
+  git -C "$1" push -q origin main 2>/dev/null
+  echo "amp: pushed ${1##*-}"
+}
+if command -v amp >/dev/null \
+   && skills_url="$(amp skills repositories 2>/dev/null | awk '/^User Skills/{f=1;next} f&&/https:/{print $1;exit}')" \
+   && [[ -n "$skills_url" ]]; then
+  src="$(skillsrc)"
+  # keep the orb-installable zshrc inside installing-dotfiles current
+  [[ -d "$src/installing-dotfiles/dotfiles" ]] && cp ~/.zshrc "$src/installing-dotfiles/dotfiles/zshrc"
+
+  clone="$HOME/.cache/amp/repositories/ampcode.com-user-skills"
+  if amprepo "$clone" "$skills_url"; then
+    keep=" "
+    for dir in "$src"/*/; do
+      [[ -f "$dir/SKILL.md" ]] || continue
+      fname="$(awk -F': *' '/^name:/{print $2;exit}' "$dir/SKILL.md")"
+      [[ -n "$fname" ]] || { echo "amp: $(basename "$dir") has no frontmatter name, skipped" >&2; continue; }
+      keep+="$fname "
+      mkdir -p "$clone/$fname"
+      rsync -a --delete --exclude .DS_Store "$dir" "$clone/$fname/"
+    done
+    for d in "$clone"/*/; do
+      fname="$(basename "$d")"
+      [[ "$keep" == *" $fname "* ]] || rm -rf "$d"
+    done
+    amppush "$clone" "sync skills"
+  fi
+
+  plugins_url="$(amp plugins repositories 2>/dev/null | awk '/^User Plugins/{f=1;next} f&&/https:/{print $1;exit}')"
+  clone="$HOME/.cache/amp/repositories/ampcode.com-user-plugins"
+  if [[ -n "$plugins_url" ]] && amprepo "$clone" "$plugins_url"; then
+    find "$clone" -maxdepth 1 -type f \( -name '*.ts' -o -name '*.js' \) -delete
+    cp ~/.config/amp/plugins/*.ts ~/.config/amp/plugins/*.js "$clone/" 2>/dev/null || true
+    amppush "$clone" "sync plugins"
+  fi
+else
+  echo "amp: not authenticated, skipping skills/plugins publish" >&2
+fi
+
 password confirm
 
 # skills: names always public. content public only if listed in public.txt,

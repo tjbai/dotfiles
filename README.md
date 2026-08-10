@@ -17,6 +17,14 @@ amp: settings.json plus hand-written plugins from `~/.config/amp/plugins/`. plug
 that amp auto-updates from ampcode.com (marked on their first line) are skipped —
 they restore themselves. `./install` curl-installs the amp cli if missing.
 
+when the amp cli is authenticated, `./update` also mirrors local skills and plugins
+into the amp user repos (`ampcode.com/git/@<user>/-/skills` and `/plugins`), which
+every amp session — this machine, runners, fresh orbs — syncs from automatically.
+local is the source of truth: anything living only in the amp repo gets deleted on
+the next update. it also refreshes the zshrc bundled inside the `installing-dotfiles`
+skill from the live `~/.zshrc`, so orbs installing dotfiles never drift. unauthenticated
+runs just print a skip line and continue.
+
 skills always keep their names. the generic ones listed in `public.txt` get published
 in full (plaintext dir under `skills/<name>`). everything else — anything that reveals
 work — becomes `skills/<name>.enc`: name visible, content encrypted. flip a skill
