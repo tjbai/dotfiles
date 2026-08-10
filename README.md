@@ -1,11 +1,17 @@
-a hypebeast's dotfiles: zsh, nvim, neovide, zed, ghostty, amp, firefox, raycast, skills.
+a hypebeast's dotfiles: zsh, tmux, nvim, neovide, zed, ghostty, amp, firefox, raycast, skills.
 
 ## how it works
 
 `./update` is a one-way push: live configs into the repo, private stuff encrypted, so
 the repo can stay public. `./install` is the reverse, for a new machine.
 
-configs (zsh, nvim, neovide, zed, ghostty, amp) are copied plaintext.
+configs (zsh, tmux, nvim, neovide, zed, ghostty, amp) are copied plaintext.
+
+tmux: one session per unit of work (`wu <name>` in zsh), each ghostty tab attaches to
+one. sessions survive ghostty quitting; resurrect+continuum autosave layout/cwd so a
+reboot restores the shape (agents restart via `amp threads continue`). bells propagate
+to ghostty tab indicators; `wu` with no args is the attention dashboard. `./install`
+brew-installs tmux and clones the two plugins if missing.
 
 amp: settings.json plus hand-written plugins from `~/.config/amp/plugins/`. plugins
 that amp auto-updates from ampcode.com (marked on their first line) are skipped —

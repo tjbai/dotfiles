@@ -1,5 +1,5 @@
 ---
-name: write-simple
+name: writing-simple
 description: "Writes prose in a controlled simple English: ASD-STE100 Simplified Technical English sentence rules plus a closed NGSL vocabulary (the 2809 highest-frequency English words), verified with a bundled checker script. Triggers on: write simple, write like STE, STE, NGSL, simplified technical english. Use whenever the user asks for simple, STE, or NGSL-constrained output."
 ---
 

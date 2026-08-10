@@ -5,9 +5,10 @@ source "$ROOT/crypto"
 shopt -s nullglob
 
 # plaintext configs
-rm -f "$ROOT/.zshrc"
+rm -f "$ROOT/.zshrc" "$ROOT/.tmux.conf"
 rm -rf "$ROOT/.config/zed" "$ROOT/.config/nvim" "$ROOT/.config/neovide" "$ROOT/.config/ghostty" "$ROOT/.config/amp"
 cp ~/.zshrc "$ROOT/.zshrc"
+cp ~/.tmux.conf "$ROOT/.tmux.conf"
 mkdir -p "$ROOT/.config/zed" && cp ~/.config/zed/settings.json "$ROOT/.config/zed/settings.json"
 mkdir -p "$ROOT/.config/nvim" && cp -r ~/.config/nvim/* "$ROOT/.config/nvim/"
 mkdir -p "$ROOT/.config/neovide" && cp -r ~/.config/neovide/* "$ROOT/.config/neovide/"

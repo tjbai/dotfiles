@@ -8,11 +8,18 @@ autoload -Uz colors && colors
 autoload -Uz vcs_info
 
 HISTFILE=~/.zsh_history
-HISTSIZE=10000
-SAVEHIST=10000
+HISTSIZE=1000000
+SAVEHIST=1000000
 HIST_STAMPS="mm/dd/yyyy"
-setopt SHARE_HISTORY
-setopt HIST_IGNORE_DUPS
+setopt INC_APPEND_HISTORY       # write to history file immediately, not on shell exit
+setopt EXTENDED_HISTORY         # record timestamp of each command
+setopt SHARE_HISTORY            # share history between all sessions
+setopt HIST_EXPIRE_DUPS_FIRST   # expire duplicates first when trimming history
+setopt HIST_IGNORE_DUPS         # don't record an entry that was just recorded
+setopt HIST_IGNORE_ALL_DUPS     # delete old entry if new entry is a duplicate
+setopt HIST_FIND_NO_DUPS        # don't display previously found lines when searching
+setopt HIST_IGNORE_SPACE        # don't record entries starting with a space
+setopt HIST_SAVE_NO_DUPS        # don't write duplicate entries to the history file
 
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 fpath=(~/.wd $fpath)
@@ -84,6 +91,21 @@ alias test="uvpy -m pytest"
 lsp() { lsof -i :$1 }
 klsp() { lsof -i :$1 | awk 'NR>1 {print $2}' | xargs -r kill -9 }
 gaws() { git diff -U0 -w --no-color "$@" | git apply --cached --ignore-whitespace --unidiff-zero - }
+
+# ── work units: one tmux session per unit of work, one ghostty tab attached to each ──
+# wu <name>  attach-or-create session <name> rooted in cwd
+# wu         dashboard: 🔔 bell (needs you) · ● activity since last viewed
+wu() {
+  [[ -z "$1" ]] && { wuls; return }
+  tmux new-session -A -s "$1" -c "$PWD"
+}
+wuls() {
+  tmux list-windows -a -F '#{?window_bell_flag,🔔,#{?window_activity_flag,●,·}} #{session_name}:#{window_index} #{window_name} — #{pane_current_command} @ #{pane_current_path}' 2>/dev/null \
+    || echo "no tmux sessions"
+}
+wuk() { tmux kill-session -t "$1" }
+_wu() { compadd ${(f)"$(tmux list-sessions -F '#S' 2>/dev/null)"} }
+compdef _wu wu wuk
 
 bindkey '\ew' backward-kill-line
 bindkey '^[[H' beginning-of-line

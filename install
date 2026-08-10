@@ -6,6 +6,7 @@ shopt -s nullglob
 
 # plaintext configs
 cp "$ROOT/.zshrc" ~/.zshrc
+cp "$ROOT/.tmux.conf" ~/.tmux.conf
 mkdir -p ~/.config/zed ~/.config/nvim ~/.config/neovide ~/.config/ghostty
 cp "$ROOT/.config/zed/settings.json" ~/.config/zed/settings.json
 cp -r "$ROOT/.config/nvim/." ~/.config/nvim/
@@ -17,6 +18,15 @@ command -v amp >/dev/null || curl -fsSL https://ampcode.com/install.sh | bash
 mkdir -p ~/.config/amp/plugins
 cp "$ROOT/.config/amp/settings.json" ~/.config/amp/settings.json
 cp -r "$ROOT/.config/amp/plugins/." ~/.config/amp/plugins/
+
+# tmux: install if missing, plus resurrect/continuum (session durability)
+if ! command -v tmux >/dev/null; then
+  if command -v brew >/dev/null; then brew install tmux
+  else echo "tmux: no homebrew — install tmux manually" >&2; fi
+fi
+mkdir -p ~/.tmux/plugins
+[[ -d ~/.tmux/plugins/tmux-resurrect ]] || git clone --depth 1 https://github.com/tmux-plugins/tmux-resurrect ~/.tmux/plugins/tmux-resurrect
+[[ -d ~/.tmux/plugins/tmux-continuum ]] || git clone --depth 1 https://github.com/tmux-plugins/tmux-continuum ~/.tmux/plugins/tmux-continuum
 
 password
 

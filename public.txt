@@ -12,6 +12,7 @@ running-zsh-aliases
 sentry
 using-railway-api
 web-design-guidelines
+writing-simple
 writing-commits
 writing-guidelines
 writing-pr-descriptions
@@ -21,4 +22,3 @@ grill-me
 writing-technical-prose
 explain-like-im-chud
 running-research-spikes
-write-simple
