@@ -91,6 +91,7 @@ alias test="uvpy -m pytest"
 lsp() { lsof -i :$1 }
 klsp() { lsof -i :$1 | awk 'NR>1 {print $2}' | xargs -r kill -9 }
 gaws() { git diff -U0 -w --no-color "$@" | git apply --cached --ignore-whitespace --unidiff-zero - }
+ss() { git -C ~/auctor/scratch pull --rebase --autostash && git -C ~/auctor/scratch push }
 
 # ── work units: one tmux session per unit of work, one ghostty tab attached to each ──
 # wu <name>  attach-or-create session <name> rooted in cwd
