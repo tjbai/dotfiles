@@ -67,13 +67,29 @@ alias gl="git pull"
 alias gd="git diff"
 gco() {
   if (( $# == 1 )) && [[ "$1" != -* ]]; then
+    local target="$1"
+    if [[ "$target" == https://github.com/*/pull/* ]]; then
+      local branch
+      branch="$(gh pr view "$target" --json headRefName --jq .headRefName 2>/dev/null)"
+      if [[ -z "$branch" ]]; then
+        echo "gco: could not resolve branch for $target" >&2
+        return 1
+      fi
+      if ! git show-ref --verify --quiet "refs/heads/$branch"; then
+        gh pr checkout "$target"
+        return
+      fi
+      target="$branch"
+    fi
     local worktree current_worktree
-    worktree="$(git for-each-ref --format='%(worktreepath)' "refs/heads/${1#refs/heads/}" 2>/dev/null)"
+    worktree="$(git for-each-ref --format='%(worktreepath)' "refs/heads/${target#refs/heads/}" 2>/dev/null)"
     current_worktree="$(git rev-parse --show-toplevel 2>/dev/null)"
     if [[ -n "$worktree" && "$worktree" != "$current_worktree" ]]; then
       cd -- "$worktree"
       return
     fi
+    git checkout "$target"
+    return
   fi
   git checkout "$@"
 }
