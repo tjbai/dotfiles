@@ -49,11 +49,33 @@ esac
 export EDITOR='vim'
 
 nv() {
-  if [ $# -eq 0 ]; then
-    nohup neovide . </dev/null &>/dev/null &
-  else
-    nohup neovide "$@" </dev/null &>/dev/null &
+  local sock="${TMPDIR:-/tmp}/nv-neovide.sock"
+
+  # branch name or PR URL: check out first, then open the resulting cwd
+  if (( $# == 1 )) && [[ "$1" != -* && ! -e "$1" ]]; then
+    if [[ "$1" == https://github.com/*/pull/* ]] ||
+       git show-ref --verify --quiet "refs/heads/$1" 2>/dev/null ||
+       git show-ref --verify --quiet "refs/remotes/origin/$1" 2>/dev/null; then
+      gco "$1" || return
+      set -- .
+    fi
   fi
+
+  # attach to a running nv-launched neovide if it's alive
+  if [[ -S "$sock" ]] && nvim --server "$sock" --remote-expr 1 &>/dev/null; then
+    local -a files
+    local f
+    for f in "${@:-.}"; do
+      files+=("${f:a}")
+    done
+    nvim --server "$sock" --remote-tab "${files[@]}"
+    nvim --server "$sock" --remote-expr "execute('tcd ' . fnameescape('${PWD//\'/''}'))" >/dev/null
+    osascript -e 'tell application "Neovide" to activate' &>/dev/null
+    return
+  fi
+
+  rm -f "$sock"
+  nohup neovide "${@:-.}" -- --listen "$sock" </dev/null &>/dev/null &
   disown %%
 }
 alias lear="clear" # common typo lol
@@ -119,21 +141,6 @@ lsp() { lsof -i :$1 }
 klsp() { lsof -i :$1 | awk 'NR>1 {print $2}' | xargs -r kill -9 }
 gaws() { git diff -U0 -w --no-color "$@" | git apply --cached --ignore-whitespace --unidiff-zero - }
 ss() { git -C ~/auctor/scratch pull --rebase --autostash && git -C ~/auctor/scratch push }
-
-# ── work units: one tmux session per unit of work, one ghostty tab attached to each ──
-# wu <name>  attach-or-create session <name> rooted in cwd
-# wu         dashboard: 🔔 bell (needs you) · ● activity since last viewed
-wu() {
-  [[ -z "$1" ]] && { wuls; return }
-  tmux new-session -A -s "$1" -c "$PWD"
-}
-wuls() {
-  tmux list-windows -a -F '#{?window_bell_flag,🔔,#{?window_activity_flag,●,·}} #{session_name}:#{window_index} #{window_name} — #{pane_current_command} @ #{pane_current_path}' 2>/dev/null \
-    || echo "no tmux sessions"
-}
-wuk() { tmux kill-session -t "$1" }
-_wu() { compadd ${(f)"$(tmux list-sessions -F '#S' 2>/dev/null)"} }
-compdef _wu wu wuk
 
 bindkey '\ew' backward-kill-line
 bindkey '^[[H' beginning-of-line
