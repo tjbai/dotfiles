@@ -1,6 +1,6 @@
 ---
 name: writing-simple
-description: "Writes prose in a controlled simple English: ASD-STE100 Simplified Technical English sentence rules plus a closed NGSL vocabulary (the 2809 highest-frequency English words), verified with a bundled checker script. Triggers on: write simple, write like STE, STE, NGSL, simplified technical english. Use whenever the user asks for simple, STE, or NGSL-constrained output."
+description: "Writes prose in a controlled simple English: ASD-STE100 Simplified Technical English sentence rules plus a closed NGSL vocabulary (the 2809 highest-frequency English words), verified with a bundled checker script. Triggers on: write simple, write like STE, STE, NGSL, simplified technical english. Use whenever the user asks for simple, STE, or NGSL-constrained output. This is the default prose register per the style skill."
 ---
 
 # Write Simple
@@ -39,8 +39,8 @@ A checker script enforces both. Writing is not done until it passes.
 
 ## Exceptions
 
-- Code identifiers, API names, file paths, commands, and quoted output stay verbatim. Wrap them in backticks so the checker skips them.
-- Proper nouns (people, products, places) are allowed. Prefer wrapping product and tool names in backticks.
+- Code identifiers, API names, file paths, commands, and quoted output stay verbatim. Wrap them in backticks so the checker skips them. Use backticks only for real code — never to make a plain word pass the checker. If a word fails the check, find an allowed word or restructure the sentence.
+- New terms and proper nouns (people, products, places) are allowed, but you must introduce them: make the first instance bold (`**Datadog**`), then write it plain after that. The checker accepts a word that is not on the list only after a bold first use.
 - Table cells and diagram labels may be fragments.
 - Do not rewrite quoted text or another author's words to comply.
 
@@ -58,4 +58,4 @@ or
 python3 scripts/check-simple.py draft.md
 ```
 
-It skips backticked spans, fenced code blocks, URLs, and table rows. It exits 1 on any hard violation: a word not on the NGSL list, a contraction, a semicolon, or a sentence over 25 words. It prints `warn` lines for possible passive voice and "-ly" adverbs — fix them unless they are false matches. Fix each violation and run it again until it prints "clean".
+It skips backticked spans, fenced code blocks, LaTeX math spans (`$...$` and `$$...$$`), URLs, and table rows. It exits 1 on any hard violation: a word not on the NGSL list (unless its first instance is bold), a contraction, a semicolon, or a sentence over 25 words. It prints `warn` lines for possible passive voice and "-ly" adverbs — fix them unless they are false matches. Fix each violation and run it again until it prints "clean".

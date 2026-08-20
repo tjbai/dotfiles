@@ -1,9 +1,6 @@
----
-name: removing-python-slop
-description: "Removes Python slop: over-defensive code, redundant parsing, unnecessary helpers, logger/error ceremony, and style cruft. Use when cleaning code that feels defensive, complex, abstracted, verbose, or distrustful of owned contracts."
----
+# Python
 
-# Removing Python Slop
+Python de-slop rules. The cross-language stance (comments, defensive code, diffs, structure, naming) lives in [coding.md](coding.md); this file is the deep Python version.
 
 Cut defensive ceremony until the code says what the system actually does.
 

@@ -6,9 +6,12 @@ Usage:
   echo "text" | check-simple.py  check stdin
 
 Skipped as verbatim: fenced code blocks, backticked spans, URLs, table rows.
+A word not on the list is accepted if its first instance is bold
+(**word**) — the academic first-use introduction. Later instances may be
+plain.
 
 Hard violations (exit 1):
-  - word not in the NGSL list
+  - word not in the NGSL list and not introduced in bold
   - contraction
   - semicolon in prose
   - sentence over 25 words
@@ -36,6 +39,8 @@ LY_OK = {"only", "early", "daily", "weekly", "monthly", "yearly", "family", "sup
 
 def strip_verbatim(text: str) -> str:
     text = re.sub(r"```.*?```", " ", text, flags=re.DOTALL)
+    text = re.sub(r"\$\$.*?\$\$", " ", text, flags=re.DOTALL)
+    text = re.sub(r"\$[^$\n]+\$", " ", text)
     text = re.sub(r"`[^`]*`", " ", text)
     text = re.sub(r"https?://\S+", " ", text)
     text = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("|"))
@@ -60,14 +65,28 @@ def main() -> int:
 
     violations = 0
 
+    bold_spans = [
+        m.span(2) for m in re.finditer(r"(\*\*|__)([^*_\n]+)\1", prose)
+    ]
+
+    def in_bold(start: int, end: int) -> bool:
+        return any(s <= start and end <= e for s, e in bold_spans)
+
+    introduced: set = set()
     bad_words: Counter = Counter()
-    for token in re.findall(r"[A-Za-z']+", prose):
-        word = token.lower().strip("'")
+    for m in re.finditer(r"[A-Za-z']+", prose):
+        word = m.group(0).lower().strip("'")
         word = re.sub(r"'s$", "", word)
-        if word and word not in WORDS:
-            bad_words[word] += 1
+        if not word or word in WORDS:
+            continue
+        if in_bold(m.start(), m.end()):
+            introduced.add(word)  # first use in bold introduces the term
+            continue
+        if word in introduced:
+            continue
+        bad_words[word] += 1
     for word, count in bad_words.most_common():
-        print(f"vocab: '{word}' not in NGSL (x{count})")
+        print(f"vocab: '{word}' not in NGSL and not introduced in bold (x{count})")
         violations += count
 
     for match in CONTRACTION.finditer(prose):
