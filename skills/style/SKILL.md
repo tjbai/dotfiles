@@ -1,6 +1,6 @@
 ---
 name: style
-description: "Style index: coding guidelines, Python de-slop rules, commit messages, PR titles and descriptions, and technical writing. Replaces the old removing-python-slop, writing-commits, writing-pr-descriptions, writing-technical-prose, and writing-unwrapped-prose skills. Use whenever writing or cleaning code, committing, writing PRs, or writing prose. Triggers on: style, slop, de-slop, deslop, clean up, tidy, commit, PR description, my style."
+description: "The global style index for everything written: code, Python, commits, PR titles and descriptions, and technical prose. Sets the default register and the de-slop bar. Apply on the first pass, not as a cleanup pass. Use whenever writing or cleaning code, committing, writing PRs, or writing any prose. Triggers on: style, slop, de-slop, deslop, clean up, tidy, commit, PR, prose, my style."
 ---
 
 # Style
@@ -15,7 +15,7 @@ Index skill. Before producing an artifact, read the matching reference file. App
 | PRs: titles and descriptions | [reference/pr.md](reference/pr.md) |
 | Prose: docs, ADRs, scratch notes, chat, comments | [reference/writing.md](reference/writing.md) |
 
-When the user says "de-slop", "clean up", or "use my removing-python-slop skill", apply coding.md and python.md.
+When the user says "de-slop" or "clean up", apply coding.md and python.md.
 
 ## Always
 
