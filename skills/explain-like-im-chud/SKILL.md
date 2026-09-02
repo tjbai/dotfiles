@@ -66,7 +66,7 @@ Always name the failure story explicitly: the worst case, and why degraded mode 
 - **Disable font ligatures** (`font-variant-ligatures: none; font-feature-settings: "calt" 0, "liga" 0;`) or Inter silently re-renders `->` as an arrow glyph.
 - **Sentence-case headers**; lowercase is fine only for code identifiers in diagram box labels.
 - **No JavaScript.** Anchor links only.
-- **Prose**: writing-technical-prose rules apply. Short sentences. Name functions, files, and fields directly. Say what is load-bearing and what breaks if you reorder it. Teacher-mode spirit: state what each part loses and why that is a tradeoff, not a bug.
+- **Prose**: the `style` skill's writing rules apply. Short sentences. Name functions, files, and fields directly. Say what is load-bearing and what breaks if you reorder it. Teacher-mode spirit: state what each part loses and why that is a tradeoff, not a bug.
 
 ## SVG rules
 

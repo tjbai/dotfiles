@@ -414,7 +414,7 @@ vim.lsp.config('basedpyright', {
 })
 vim.lsp.enable('basedpyright')
 vim.lsp.enable('lua_ls')
-vim.lsp.config('tsgo', {
+vim.lsp.config('tsc', {
   settings = {
     typescript = {
       preferences = {
@@ -423,7 +423,8 @@ vim.lsp.config('tsgo', {
     },
   },
 })
-vim.lsp.enable('tsgo')
+vim.lsp.enable('tsc')
+vim.lsp.enable('rust_analyzer')
 
 -- diagnostics
 vim.diagnostic.config({

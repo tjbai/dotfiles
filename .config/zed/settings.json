@@ -1,20 +1,22 @@
 {
-  "icon_theme": "Zed (Default)",
+  "cli_default_open_behavior": "existing_window",
+  "icon_theme": {
+    "mode": "dark",
+    "light": "Zed (Default)",
+    "dark": "Zed (Default)"
+  },
   "vim_mode": true,
   "relative_line_numbers": "enabled",
   "base_keymap": "VSCode",
-  "ui_font_size": 14,
+  "ui_font_size": 12,
   "buffer_font_size": 11,
-  "theme": "Gruvbox Dark Hard",
+  "theme": {
+    "mode": "dark",
+    "light": "One Light",
+    "dark": "Gruvbox Dark Hard"
+  },
   "show_edit_predictions": false,
-  "language_servers": [
-    "basedpyright",
-    "ty",
-    "pyright",
-    "metals",
-    "ocamllsp",
-    "tsgo"
-  ],
+  "language_servers": ["metals", "ocamllsp", "tsgo"],
   "extend_comment_on_newline": false,
   "git": {
     "inline_blame": {
@@ -24,7 +26,9 @@
   "format_on_save": "off",
   "toolbar": {
     "breadcrumbs": true,
-    "quick_actions": false
+    "quick_actions": false,
+    "selections_menu": false,
+    "agent_review": false
   },
   "gutter": {
     "line_numbers": false,
@@ -48,8 +52,8 @@
     "include_warnings": false
   },
   "agent": {
-    "enabled": true,
-    "button": true
+    "enabled": false,
+    "button": false
   },
   "agent_servers": {
     "codex-acp": {
@@ -88,12 +92,30 @@
       "AMP_FORCE_BEL": "1"
     }
   },
+  "max_tabs": 1,
   "tab_bar": {
-    "show": true,
-    "show_nav_history_buttons": false
+    "show": false,
+    "show_nav_history_buttons": false,
+    "show_tab_bar_buttons": false
+  },
+  "title_bar": {
+    "show_onboarding_banner": false,
+    "show_user_picture": false,
+    "show_user_menu": false,
+    "show_sign_in": false
+  },
+  "status_bar": {
+    "experimental.show": false
+  },
+  "search": {
+    "button": false
+  },
+  "debugger": {
+    "button": false
   },
   "project_panel": {
     "button": false,
+    "dock": "left",
     "indent_size": 16
   },
   "preferred_line_length": 160,
@@ -104,6 +126,7 @@
       "remove_trailing_whitespace_on_save": true
     },
     "Python": {
+      "language_servers": ["basedpyright", "ruff"],
       "remove_trailing_whitespace_on_save": true
     },
     "TypeScript": {
@@ -123,16 +146,6 @@
     }
   },
   "lsp": {
-    "pyright": {
-      "settings": {
-        "python.analysis": {
-          "typeCheckingMode": "standard"
-        },
-        "python": {
-          "pythonPath": ".venv/bin/python"
-        }
-      }
-    },
     "tsgo": {
       "initialization_options": {
         "scriptKind": "auto"
@@ -144,11 +157,38 @@
   },
   "remove_trailing_whitespace_on_save": false,
   "experimental.theme_overrides": {
+    "background.appearance": "blurred",
     "editor.document_highlight.bracket_background": "#00000000",
     "editor.document_highlight.read_background": "#00000000",
     "editor.document_highlight.write_background": "#00000000"
   },
-  "disable_ai": false,
+  "theme_overrides": {
+    "Kanagawa Dragon": {
+      "background": "#181616d9",
+      "editor.background": "#18161600",
+      "tab_bar.background": "#18161600",
+      "tab.active_background": "#18161600",
+      "tab.inactive_background": "#18161600",
+      "title_bar.background": "#18161600",
+      "toolbar.background": "#18161600",
+      "panel.background": "#18161600",
+      "terminal.background": "#18161600",
+      "editor.gutter.background": "#18161600"
+    },
+    "Gruvbox Dark Hard": {
+      "background": "#1d2021d9",
+      "editor.background": "#1d202100",
+      "tab_bar.background": "#1d202100",
+      "tab.active_background": "#1d202100",
+      "tab.inactive_background": "#1d202100",
+      "title_bar.background": "#1d202100",
+      "toolbar.background": "#1d202100",
+      "panel.background": "#1d202100",
+      "terminal.background": "#1d202100",
+      "editor.gutter.background": "#1d202100"
+    }
+  },
+  "disable_ai": true,
   "cargo": null,
   "active_pane_modifiers": {
     "border_size": 0.0,
