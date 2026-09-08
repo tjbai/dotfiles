@@ -16,7 +16,11 @@
     "dark": "Gruvbox Dark Hard"
   },
   "show_edit_predictions": false,
-  "language_servers": ["metals", "ocamllsp", "tsgo"],
+  "language_servers": [
+    "metals",
+    "ocamllsp",
+    "tsgo"
+  ],
   "extend_comment_on_newline": false,
   "git": {
     "inline_blame": {
@@ -71,7 +75,10 @@
     "Devin": {
       "type": "custom",
       "command": "npx",
-      "args": ["tsx", "/Users/bai/dev/devin-acp/src/index.ts"],
+      "args": [
+        "tsx",
+        "/Users/bai/dev/devin-acp/src/index.ts"
+      ],
       "env": {
         "DEVIN_REPOS": "auctor/auctor,auctor/sapiens"
       }
@@ -126,21 +133,39 @@
       "remove_trailing_whitespace_on_save": true
     },
     "Python": {
-      "language_servers": ["basedpyright", "ruff"],
+      "language_servers": [
+        "basedpyright",
+        "ruff"
+      ],
       "remove_trailing_whitespace_on_save": true
     },
     "TypeScript": {
-      "language_servers": ["!tsgo", "vtsls", "..."]
+      "language_servers": [
+        "!tsgo",
+        "vtsls",
+        "..."
+      ]
     },
     "TSX": {
-      "language_servers": ["!tsgo", "vtsls", "..."]
+      "language_servers": [
+        "!tsgo",
+        "vtsls",
+        "..."
+      ]
     },
     "JavaScript": {
-      "language_servers": ["!tsgo", "vtsls", "..."],
+      "language_servers": [
+        "!tsgo",
+        "vtsls",
+        "..."
+      ],
       "formatter": {
         "external": {
           "command": "prettier",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
+          "arguments": [
+            "--stdin-filepath",
+            "{buffer_path}"
+          ]
         }
       }
     }
@@ -191,8 +216,9 @@
   "disable_ai": true,
   "cargo": null,
   "active_pane_modifiers": {
-    "border_size": 0.0,
-    "inactive_opacity": 1.0
+    "border_size": 0,
+    "inactive_opacity": 1
   },
   "cursor_blink": false
+  }
 }

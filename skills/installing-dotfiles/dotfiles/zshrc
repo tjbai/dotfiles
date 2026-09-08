@@ -136,7 +136,7 @@ alias ghpr="gh pr create --base"
 alias tsc="npx tsc --noEmit -p tsconfig.json"
 alias codexh="codex --model=gpt-5-codex -c model_reasoning_effort=\"high\""
 alias test="uvpy -m pytest"
-alias allnight="caffeinate -t 43200"
+alias allnight="caffeinate -dis -t 43200"
 
 lsp() { lsof -i :$1 }
 klsp() { lsof -i :$1 | awk 'NR>1 {print $2}' | xargs -r kill -9 }
