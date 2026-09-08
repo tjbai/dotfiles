@@ -30,7 +30,13 @@ done
 # name (the repo requires dir name == name); dirs without SKILL.md are
 # skipped. plugins mirror everything local, auto-updated ones included, since
 # orbs have no other way to get them. needs no password; skipped quietly
-# when amp is missing or unauthenticated.
+# when amp is missing or unauthenticated. network-bound, so it runs in the
+# background while the rest of the script does local work; its output is
+# held in $amplog and printed at the end.
+src="$(skillsrc)"
+# keep the orb-installable zshrc inside installing-dotfiles current. done
+# here, before the fork, so the skills encryption below never races it.
+[[ -d "$src/installing-dotfiles/dotfiles" ]] && cp ~/.zshrc "$src/installing-dotfiles/dotfiles/zshrc"
 amprepo() { # amprepo <clone-dir> <url> — fresh checkout of origin/main
   if [[ ! -d "$1/.git" ]]; then
     git init -q -b main "$1"
@@ -46,13 +52,11 @@ amppush() { # amppush <clone-dir> <message>
   git -C "$1" push -q origin main 2>/dev/null
   echo "amp: pushed ${1##*-}"
 }
+amplog="$(mktemp)"
+(
 if command -v amp >/dev/null \
    && skills_url="$(amp skills repositories 2>/dev/null | awk '/^User Skills/{f=1;next} f&&/https:/{print $1;exit}')" \
    && [[ -n "$skills_url" ]]; then
-  src="$(skillsrc)"
-  # keep the orb-installable zshrc inside installing-dotfiles current
-  [[ -d "$src/installing-dotfiles/dotfiles" ]] && cp ~/.zshrc "$src/installing-dotfiles/dotfiles/zshrc"
-
   clone="$HOME/.cache/amp/repositories/ampcode.com-user-skills"
   if amprepo "$clone" "$skills_url"; then
     keep=" "
@@ -81,15 +85,19 @@ if command -v amp >/dev/null \
 else
   echo "amp: not authenticated, skipping skills/plugins publish" >&2
 fi
+) >"$amplog" 2>&1 &
+amppid=$!
 
 password confirm
 
 # skills: names always public. content public only if listed in public.txt,
-# otherwise encrypted to skills/<name>.enc.
-src="$(skillsrc)"
+# otherwise encrypted to skills/<name>.enc. each encryption (a compare-decrypt
+# plus maybe a re-encrypt, ~0.1s of pbkdf2 apiece) runs in its own background
+# job; outputs are per-skill files so they never collide.
 mkdir -p "$ROOT/skills"
 pub=" $(public | tr '\n' ' ')"
 keep=" "
+encpids=()
 for dir in "$src"/*/; do
   name="$(basename "$dir")"
   keep+="$name "
@@ -102,17 +110,21 @@ for dir in "$src"/*/; do
   fi
   rm -rf "$ROOT/skills/$name"
   out="$ROOT/skills/$name.enc"
-  if [[ -f "$out" ]]; then
-    old="$(mktemp -d)"
-    if enc -d -in "$out" 2>/dev/null | tar -xzf - -C "$old" 2>/dev/null \
-       && diff -qr "$old/$name" "$dir" >/dev/null 2>&1; then
-      rm -rf "$old"; continue
+  (
+    if [[ -f "$out" ]]; then
+      old="$(mktemp -d)"
+      if enc -d -in "$out" 2>/dev/null | tar -xzf - -C "$old" 2>/dev/null \
+         && diff -qr "$old/$name" "$dir" >/dev/null 2>&1; then
+        rm -rf "$old"; exit 0
+      fi
+      rm -rf "$old"
     fi
-    rm -rf "$old"
-  fi
-  tar -czf - -C "$src" "$name" | enc -e -out "$out"
-  echo "encrypted: $name"
+    tar -czf - -C "$src" "$name" | enc -e -out "$out"
+    echo "encrypted: $name"
+  ) &
+  encpids+=($!)
 done
+for p in "${encpids[@]-}"; do [[ -n "$p" ]] && wait "$p"; done
 for out in "$ROOT/skills"/*.enc; do
   name="$(basename "$out" .enc)"
   [[ "$keep" == *" $name "* ]] || { rm -f "$out"; echo "dropped: $name"; }
@@ -177,3 +189,8 @@ while IFS= read -r path; do
   enc -e -in ~/"$path" -out "$out"
   echo "private: $path"
 done < <(private)
+
+# amp publish: join the background job and replay its output.
+ampstatus=0; wait "$amppid" || ampstatus=$?
+cat "$amplog"; rm -f "$amplog"
+[[ "$ampstatus" -eq 0 ]] || echo "amp: publish failed" >&2
