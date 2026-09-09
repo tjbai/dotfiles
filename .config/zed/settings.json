@@ -1,7 +1,7 @@
 {
   "cli_default_open_behavior": "existing_window",
   "icon_theme": {
-    "mode": "dark",
+    "mode": "light",
     "light": "Zed (Default)",
     "dark": "Zed (Default)"
   },
@@ -13,7 +13,7 @@
   "theme": {
     "mode": "dark",
     "light": "One Light",
-    "dark": "Gruvbox Dark Hard"
+    "dark": "Kanagawa Dragon"
   },
   "show_edit_predictions": false,
   "language_servers": [
