@@ -2,11 +2,11 @@
 
 ## Default register
 
-The `writing-simple` skill is the default register for all prose: STE sentence rules plus the closed NGSL vocabulary. Load it whenever writing prose.
+The `writing-simple` skill is the default register for all prose: STE sentence rules, plain NGSL words for plain ideas, precise technical terms where they are exact. Load it whenever writing prose.
 
 Checker policy:
 
-- Durable prose (docs, scratch notes, ADRs, READMEs, status files): run `scripts/check-simple.py` until clean. Mandatory.
+- Durable prose (docs, scratch notes, ADRs, READMEs, status files): run `scripts/check-simple.py` until clean, and review each `warn vocab` line. Mandatory.
 - Chat replies, commit bodies, PR body prose: follow the sentence and vocabulary rules by hand. Running the checker is best-effort, not required.
 
 ## Mechanics
@@ -15,7 +15,7 @@ Checker policy:
 - Never write `--` in place of an em-dash. Avoid em-dashes generally: use a period or a comma.
 - No semicolons. Write two sentences, or state the connector: "because", "so", "but".
 - Backticks are for real code only: identifiers, paths, commands, table names, flags. Never wrap an ordinary word in backticks.
-- Bold sparingly: first use of a new term or proper noun, per writing-simple.
+- Bold sparingly: first use of terminology the reader may not know (domain terms, names the document coins), per writing-simple. Not for general engineering terms or product names.
 
 ## Banned register
 

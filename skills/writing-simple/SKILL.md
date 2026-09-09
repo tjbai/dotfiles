@@ -1,16 +1,16 @@
 ---
 name: writing-simple
-description: "Writes prose in a controlled simple English: ASD-STE100 Simplified Technical English sentence rules plus a closed NGSL vocabulary (the 2809 highest-frequency English words), verified with a bundled checker script. Triggers on: write simple, write like STE, STE, NGSL, simplified technical english. Use whenever the user asks for simple, STE, or NGSL-constrained output. This is the default prose register per the style skill."
+description: "Writes prose in simple technical English: ASD-STE100 Simplified Technical English sentence rules, plain NGSL words for plain ideas, precise technical terms where they are exact, and bold introduction of unfamiliar terminology. Verified with a bundled checker script. Triggers on: write simple, write like STE, STE, NGSL, simplified technical english. Use whenever the user asks for simple, STE, or NGSL-constrained output. This is the default prose register per the style skill."
 ---
 
 # Write Simple
 
-Write in controlled simple English. Two layers, both hard rules:
+Write in simple technical English. Two layers:
 
-1. **STE sentence mechanics** (from ASD-STE100 Simplified Technical English).
-2. **Closed NGSL vocabulary**: every word of prose must appear in `reference/ngsl-words.txt` (NGSL 1.2 plus the 52 supplementary words, one lowercase word form per line).
+1. **STE sentence mechanics** (from ASD-STE100 Simplified Technical English). Hard rules.
+2. **Plain words, precise terms.** The NGSL list in `reference/ngsl-words.txt` (NGSL 1.2 plus 52 supplementary words) is the guide for ordinary wording. Technical terms are allowed when they are the exact name for the thing.
 
-A checker script enforces both. Writing is not done until it passes.
+A checker script enforces the mechanics and flags words off the NGSL list for review. Writing is not done until the mechanics pass and you have reviewed each flagged word.
 
 ## Sentences
 
@@ -24,13 +24,20 @@ A checker script enforces both. Writing is not done until it passes.
 
 ## Words
 
-1. Every word of prose must be on the list in `reference/ngsl-words.txt`. If a word is not in the file, do not write it. Find the closest allowed word or restructure the sentence. Do not leave the idea out — say it with the words you have.
-2. Keep the plain meaning. A simpler word must not change what the sentence claims.
-3. Cut adverbs and hedges: "very", "really", "just", "quite", most "-ly" adverbs. Use a stronger verb instead.
-4. No metaphor, idiom, or slang. Replace each with the literal meaning.
-5. Use one term per concept and use it every time. Do not vary names for the same thing.
-6. Use each word as one part of speech with one meaning.
-7. Keep noun clusters to 3 words or fewer. Break longer ones with prepositions. Keep the articles ("the", "a").
+Three principles decide every word choice.
+
+1. **Write for a working engineer.** Assume the reader knows general programming and engineering vocabulary, common tools, and well-known products. Do not explain or decorate those.
+2. **Plain word when the plain word is exact. Technical term when it is.** For an ordinary idea, use the NGSL word: "use" not "leverage", "start" not "initiate". For a precise idea, use the precise term (`webhook`, `idempotent`, `mutex`, `rebase`, `migration`). A vague paraphrase of a technical term is worse than the term. STE itself allows technical names and verbs outside its dictionary for this reason.
+3. **Introduce terminology once, then use one name per concept.** Bold the first use of a term the reader may not know. That means domain vocabulary (an Auctor term like **portal space**), a name this document coins, or a concept from another field. After the bold first use, write it plain and never vary the name. Do not bold general engineering terms, product names, or anything the reader already knows.
+
+Rules that follow from these:
+
+- Cut adverbs and hedges: "very", "really", "just", "quite", most "-ly" adverbs. Use a stronger verb instead.
+- No metaphor, idiom, or slang. Replace each with the literal meaning.
+- No engineering-blog register: "elegant", "robust", "seamless", "leverage", "the key insight", "at its core". Name the concrete referent instead.
+- Use each word as one part of speech with one meaning.
+- Keep noun clusters to 3 words or fewer. Break longer ones with prepositions. Keep the articles ("the", "a").
+- A simpler word must not change what the sentence claims. Keep the plain meaning.
 
 ## Warnings and instructions
 
@@ -39,8 +46,7 @@ A checker script enforces both. Writing is not done until it passes.
 
 ## Exceptions
 
-- Code identifiers, API names, file paths, commands, and quoted output stay verbatim. Wrap them in backticks so the checker skips them. Use backticks only for real code — never to make a plain word pass the checker. If a word fails the check, find an allowed word or restructure the sentence.
-- New terms and proper nouns (people, products, places) are allowed, but you must introduce them: make the first instance bold (`**Datadog**`), then write it plain after that. The checker accepts a word that is not on the list only after a bold first use.
+- Code identifiers, API names, file paths, commands, and quoted output stay verbatim. Wrap them in backticks so the checker skips them. Use backticks only for real code, never to make a plain word pass.
 - Table cells and diagram labels may be fragments.
 - Do not rewrite quoted text or another author's words to comply.
 
@@ -58,4 +64,6 @@ or
 python3 scripts/check-simple.py draft.md
 ```
 
-It skips backticked spans, fenced code blocks, LaTeX math spans (`$...$` and `$$...$$`), URLs, and table rows. It exits 1 on any hard violation: a word not on the NGSL list (unless its first instance is bold), a contraction, a semicolon, or a sentence over 25 words. It prints `warn` lines for possible passive voice and "-ly" adverbs — fix them unless they are false matches. Fix each violation and run it again until it prints "clean".
+It skips backticked spans, fenced code blocks, LaTeX math spans (`$...$` and `$$...$$`), URLs, and table rows. It exits 1 on any hard violation: a contraction, a semicolon, or a sentence over 25 words. It prints `warn` lines for possible passive voice, "-ly" adverbs, and words off the NGSL list. A word introduced in bold stops being flagged after its first use.
+
+Treat each `warn vocab` line as a question, not an error. Keep the word if it is the exact technical term or a name the reader knows. Replace it if a plain word says the same thing. Bold its first use if it is terminology the reader may not know. Fix each hard violation and run again until it prints "clean".

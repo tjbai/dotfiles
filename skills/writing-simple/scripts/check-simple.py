@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
-"""Check text against the write-simple rules: NGSL vocabulary + STE mechanics.
+"""Check text against the write-simple rules: STE mechanics + NGSL guidance.
 
 Usage:
   check-simple.py FILE...        check files
   echo "text" | check-simple.py  check stdin
 
 Skipped as verbatim: fenced code blocks, backticked spans, URLs, table rows.
-A word not on the list is accepted if its first instance is bold
-(**word**) — the academic first-use introduction. Later instances may be
-plain.
 
 Hard violations (exit 1):
-  - word not in the NGSL list and not introduced in bold
   - contraction
   - semicolon in prose
   - sentence over 25 words
 
 Warnings (printed, exit still 0):
+  - word not in the NGSL list. Review each: keep it if it is the exact
+    technical term or a name the reader knows, replace it if a plain word
+    says the same thing, bold its first use if it is terminology the
+    reader may not know. A word introduced in bold (**word**) is not
+    flagged again.
   - possible passive voice
   - "-ly" adverb
 """
@@ -86,8 +87,7 @@ def main() -> int:
             continue
         bad_words[word] += 1
     for word, count in bad_words.most_common():
-        print(f"vocab: '{word}' not in NGSL and not introduced in bold (x{count})")
-        violations += count
+        print(f"warn vocab: '{word}' off the NGSL list (x{count}). Keep if exact, replace if plain works, bold if new to the reader.")
 
     for match in CONTRACTION.finditer(prose):
         print(f"contraction: {match.group(0)}")
