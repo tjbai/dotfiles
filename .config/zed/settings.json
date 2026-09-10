@@ -13,7 +13,7 @@
   "theme": {
     "mode": "dark",
     "light": "One Light",
-    "dark": "Kanagawa Dragon"
+    "dark": "Gruvbox Dark"
   },
   "show_edit_predictions": false,
   "language_servers": [

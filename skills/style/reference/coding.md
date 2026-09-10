@@ -8,6 +8,7 @@ Language-agnostic first-pass rules. Code the user calls "slop" violates one of t
 - Exception: a rare, thin, load-bearing note for a genuine hazard or a "why is this weird" justification — a runtime constraint, security invariant, replay/policy hazard, or model-facing contract. In Python the house form is `# NOTE(tj) -- ...`.
 - Never re-add a comment the user or a cleanup pass deleted.
 - No section banners, no narration comments, no commented-out code, no docstrings that restate the flow.
+- A surviving comment is one line, all lowercase, no semicolons. Never hard-wrap it across lines. If it would be a docstring, make it a `#` comment on the line above the code instead. Evidence: "drop all semicolons in comments. all cocmment should be all lower-case. write this stuff in my style."
 
 ## Defensive code
 
