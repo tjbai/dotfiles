@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# amp self-updates ~/.amp/bin/amp in place but a running process keeps the old
+# code. if the binary is newer than the runner process and nothing is working,
+# kick the runner so KeepAlive brings it back on the new version.
+set -u
+label="gui/$(id -u)/com.tjbai.amp-runner"
+
+pid="$(launchctl print "$label" 2>/dev/null | sed -n 's/^[[:space:]]*pid = //p' | head -1)"
+[[ -n "$pid" ]] || { echo "runner not running; nothing to do"; exit 0; }
+started="$(date -j -f '%a %b %d %T %Y' "$(ps -o lstart= -p "$pid" | xargs)" +%s)"
+bin="$(stat -f %m "$HOME/.amp/bin/amp")"
+(( bin > started )) || { echo "runner already on current amp"; exit 0; }
+
+# `amp top --stream-jsonl` emits an empty placeholder first, then real state
+# about a second later. sample for a few seconds and take the last line.
+snap="$(mktemp)"
+amp top --stream-jsonl > "$snap" 2>/dev/null &
+top=$!
+sleep 6
+kill "$top" 2>/dev/null; wait "$top" 2>/dev/null
+last="$(tail -1 "$snap")"; rm -f "$snap"
+[[ -n "$last" ]] || { echo "could not read amp top; skipping"; exit 0; }
+if [[ "$last" == *'"working":true'* ]]; then
+  echo "threads working; leaving runner alone"
+  exit 0
+fi
+
+echo "restarting runner onto amp built $(date -r "$bin" '+%Y-%m-%d %H:%M')"
+launchctl kickstart -k "$label"

@@ -25,6 +25,25 @@ the next update. it also refreshes the zshrc bundled inside the `installing-dotf
 skill from the live `~/.zshrc`, so orbs installing dotfiles never drift. unauthenticated
 runs just print a skip line and continue.
 
+amp settings that live on ampcode.com, not on disk — `global_agent_guidance`
+(my personal AGENTS.md, in every thread), `puck_instructions`, dictation vocabulary,
+and the toggles/project defaults — are tracked in `amp/` and moved with `amp/sync
+pull|push|check`. the repo is canonical: edit `amp/*.md`, `amp/sync push`. there's
+no cli for these, only the amp tool inside a thread, so pull/push drive a low-mode
+`amp -x` thread (~1 min, archived after) and re-pull to verify. `./install` pushes;
+`./update` only reports drift (`UPDATE_SKIP_AMP_SYNC=1` to skip the thread).
+`amp/secrets.txt` is names only — orb secrets can't be exported, it's a checklist.
+
+launchd: every user agent is a directory under `launchd/jobs/<name>/` (`job` spec +
+`run` script + optional `check`), rendered to `~/Library/LaunchAgents/com.tjbai.*`
+by `launchd/lj` (symlinked to `~/.local/bin/lj` by install). scripts run live from
+the checkout; `lj apply` only when the spec changes. `lj ls`, `lj status`, `lj log`,
+`lj doctor` read health from the wrapper's logs and state, since launchd itself
+barely remembers anything. `./install` applies (`--prune` drops labels the repo
+doesn't define); `./update` runs `lj doctor`. jobs today: `amp-runner` keeps the
+`bai-mbp` amp runner up so orbs and puck can reach this laptop; `amp-runner-refresh`
+restarts it onto a newer amp binary at 5am if nothing is working.
+
 skills always keep their names. the generic ones listed in `public.txt` get published
 in full (plaintext dir under `skills/<name>`). everything else — anything that reveals
 work — becomes `skills/<name>.enc`: name visible, content encrypted. flip a skill
@@ -69,6 +88,8 @@ crypto        shared password + openssl, sourced by both
 public.txt    skills safe to publish in full (everything else is encrypted)
 private.txt   $HOME-relative files to encrypt
 skills/       skills — <name>/ plaintext if public, <name>.enc if not
+amp/          server-side amp settings: sync script, guidance + puck .md, settings.json, secret names
+launchd/      lj (the tool) + jobs/<name>/{job,run,check}
 vault/        everything encrypted, nothing home-mirrored:
   private/    encrypted private files
   firefox/    encrypted bookmarks + search shortcuts

@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+# amp/sync — server-side amp settings, tracked here as files.
+#
+#   global_agent_guidance.md   personal AGENTS.md, injected into every thread
+#   puck_instructions.md       personal instructions for puck
+#   dictation_vocabulary.txt   one term per line
+#   settings.json              every other user-scope setting (dial, toggles, project defaults)
+#   secrets.txt                names of orb secrets/env vars (values are never exportable)
+#
+# the repo is canonical: edit here, `sync push`. `sync pull` adopts edits made on
+# ampcode.com. `sync check` reports drift without changing anything (./update
+# runs it). there is no CLI or API for these settings, only the amp tool inside
+# a thread, so pull/push drive a low-mode `amp -x` thread and verify the result
+# with a second pull — the model is the actuator, this script is the judge.
+# vocabulary and secrets have real CLI commands and skip the agent.
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DIR="$ROOT/amp"
+TEXT_KEYS="global_agent_guidance puck_instructions dictation_vocabulary"
+
+die() { echo "amp/sync: $*" >&2; exit 1; }
+command -v jq >/dev/null || die "needs jq"
+command -v amp >/dev/null || die "needs amp"
+
+text_file() {
+  case "$1" in
+    dictation_vocabulary) echo "$DIR/$1.txt" ;;
+    *) echo "$DIR/$1.md" ;;
+  esac
+}
+is_text() { [[ " $TEXT_KEYS " == *" $1 "* ]]; }
+
+# run one execute-mode thread; print its final text; archive it. fails if the
+# thread did not end in result/success.
+agent() { # agent <prompt>
+  local stream; stream="$(mktemp)"
+  printf '%s' "$1" | amp -x --stream-json --mode low --visibility private --no-notifications --no-ide \
+    > "$stream" 2>&1 || true
+  local tid; tid="$(jq -r 'select(.type=="system" and .subtype=="init") | .session_id' "$stream" 2>/dev/null | head -1)"
+  local ok; ok="$(jq -r 'select(.type=="result") | .subtype' "$stream" 2>/dev/null | tail -1)"
+  jq -r 'select(.type=="assistant") | .message.content[]? | select(.type=="text") | .text' "$stream" 2>/dev/null | tail -3
+  rm -f "$stream"
+  [[ -n "$tid" ]] && amp threads archive "$tid" >/dev/null 2>&1 || true
+  [[ "$ok" == success ]] || die "agent thread ${tid:-?} did not succeed"
+}
+
+# LIVE: path to a JSON array of user-scope, editable settings
+pull_live() {
+  LIVE="$(mktemp)"
+  if [[ -n "${AMP_SYNC_LIVE:-}" ]]; then cp "$AMP_SYNC_LIVE" "$LIVE"; return; fi  # offline testing
+  local raw="$LIVE.raw"
+  agent "Use code_exec to import get_settings from \"amp\" and call it with {}. Write the complete JSON result (the full array, pretty-printed) to $raw with the file creation tool. Do not summarize it and do not reply with anything except 'done'." >/dev/null
+  [[ -s "$raw" ]] || die "agent did not write $raw"
+  jq -e 'type=="array"' "$raw" >/dev/null || die "$raw is not a JSON array"
+  jq '[.[] | select(.scope=="user" and .editable)]' "$raw" > "$LIVE"
+  rm -f "$raw"
+}
+
+live_keys() { jq -r '.[].key' "$LIVE"; }
+live_value() { jq -c --arg k "$1" '.[] | select(.key==$k) | .value' "$LIVE"; }   # JSON literal
+live_text() { jq -r --arg k "$1" '.[] | select(.key==$k) | .value // ""' "$LIVE"; } # raw string, null → ""
+
+repo_text() { local f; f="$(text_file "$1")"; [[ -f "$f" ]] && cat "$f" || true; }
+repo_value() { jq -c --arg k "$1" 'if has($k) then .[$k] else null end' "$DIR/settings.json" 2>/dev/null || echo null; }
+
+# strip one trailing newline so files (which end in \n) compare equal to server strings
+norm() { printf '%s' "$1" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' ; }
+
+# ---- commands --------------------------------------------------------------
+
+do_pull() {
+  pull_live
+  local k v f
+  for k in $(live_keys); do
+    if is_text "$k"; then
+      f="$(text_file "$k")"; v="$(live_text "$k")"
+      if [[ -z "$v" ]]; then : > "$f"; else printf '%s\n' "$v" > "$f"; fi
+    fi
+  done
+  jq -S --arg t " $TEXT_KEYS " '[.[] | select(.key as $k | ($t | contains(" " + $k + " ")) | not)] | map({(.key): .value}) | add // {}' "$LIVE" > "$DIR/settings.json"
+  amp secrets list --user 2>/dev/null | awk 'NR>1 && NF {print $1}' | sort > "$DIR/secrets.txt"
+  rm -f "$LIVE"
+  echo "pulled → $DIR"
+}
+
+# print drifted keys, one per line, as "key" ; sets DRIFT count
+diff_keys() {
+  DRIFT=0
+  local k lv rv
+  for k in $(live_keys); do
+    if is_text "$k"; then
+      lv="$(norm "$(live_text "$k")")"; rv="$(norm "$(repo_text "$k")")"
+    else
+      lv="$(live_value "$k")"; rv="$(repo_value "$k")"
+    fi
+    if [[ "$lv" != "$rv" ]]; then echo "$k"; DRIFT=$((DRIFT + 1)); fi
+  done
+}
+
+do_check() {
+  pull_live
+  local drifted; drifted="$(diff_keys)"
+  local live_secrets; live_secrets="$(amp secrets list --user 2>/dev/null | awk 'NR>1 && NF {print $1}' | sort)"
+  local repo_secrets; repo_secrets="$(sort "$DIR/secrets.txt" 2>/dev/null || true)"
+  rm -f "$LIVE"
+  local bad=0
+  if [[ -n "$drifted" ]]; then
+    echo "amp settings differ from repo (amp/sync pull to adopt, push to overwrite):"
+    printf '  %s\n' $drifted; bad=1
+  fi
+  if [[ "$live_secrets" != "$repo_secrets" ]]; then
+    echo "amp secrets names differ from amp/secrets.txt:"
+    diff <(echo "$repo_secrets") <(echo "$live_secrets") | sed 's/^/  /' || true; bad=1
+  fi
+  (( bad == 0 )) && echo "amp settings: in sync"
+  return $bad
+}
+
+do_push() {
+  pull_live
+  local drifted; drifted="$(diff_keys)"
+  if [[ -z "$drifted" ]]; then rm -f "$LIVE"; echo "amp settings: nothing to push"; return 0; fi
+
+  local k prompt="" f v
+  for k in $drifted; do
+    if [[ "$k" == dictation_vocabulary ]]; then
+      f="$(text_file "$k")"
+      if [[ -s "$f" ]]; then xargs amp config vocabulary set < "$f" >/dev/null; else amp config vocabulary set >/dev/null; fi
+      echo "pushed $k (cli)"
+    elif is_text "$k"; then
+      f="$(text_file "$k")"
+      if [[ -s "$f" ]]; then
+        prompt+="- key \"$k\": read the file $f with your file reading tool and pass its contents as the value, verbatim, byte for byte, minus only the single trailing newline at the end of the file. Do not paraphrase, reflow, or trim anything else.
+"
+      else
+        prompt+="- key \"$k\": value null (clears it).
+"
+      fi
+    else
+      v="$(repo_value "$k")"
+      prompt+="- key \"$k\": value $v (a JSON literal; pass it with that exact type).
+"
+    fi
+  done
+  rm -f "$LIVE"
+
+  if [[ -n "$prompt" ]]; then
+    agent "Use code_exec to import update_setting from \"amp\" and call it once per item below. These are all non-risky user-scope settings; do not pass confirm. Make no other changes and call no other tools except reading the files named here. Reply only 'done'.
+$prompt" >/dev/null
+    # verify: what landed must equal the repo
+    pull_live
+    local still; still="$(diff_keys)"; rm -f "$LIVE"
+    still="$(echo "$still" | grep -v '^dictation_vocabulary$' || true)"
+    [[ -z "$still" ]] || die "push verification failed, still differ: $(echo $still)"
+  fi
+  echo "pushed: $(echo $drifted)"
+}
+
+case "${1:-}" in
+  pull) do_pull ;;
+  push) do_push ;;
+  check) do_check ;;
+  dump) pull_live; cat "$LIVE"; rm -f "$LIVE" ;;   # raw live array, for debugging
+  *) echo "usage: amp/sync pull|push|check|dump" >&2; exit 2 ;;
+esac

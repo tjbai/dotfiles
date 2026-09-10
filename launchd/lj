@@ -1,0 +1,369 @@
+#!/usr/bin/env bash
+# lj — launchd jobs, defined in this repo, applied to this machine.
+#
+# a job is a directory under launchd/jobs/<name>/ with:
+#   job   bash-sourced spec: INTERVAL=<sec> | CALENDAR="Hour=5 Minute=0 ..." | KEEP_ALIVE=1
+#         optional: RUN_AT_LOAD=1  CWD=<dir>  DESC="..."
+#   run   the executable. runs straight from the checkout, so edits are live
+#         on the next tick; only spec changes need `lj apply`.
+#
+# every job runs through `lj _exec <name>`, which sets PATH, timestamps
+# START/END in ~/Library/Logs/tjbai/<name>.log, records the last run in
+# ~/.local/state/lj/<name>.last, and posts a notification on failure. launchd
+# itself only knows state, pid, last exit code and run count — the wrapper is
+# what makes `lj ls` and `lj doctor` possible.
+#
+# lj owns every com.tjbai.* label in ~/Library/LaunchAgents and nothing else.
+# `lj ls --all` and `lj status <label>` can read any agent, read-only.
+set -u
+shopt -s nullglob
+
+SELF="$(readlink -f "${BASH_SOURCE[0]}")"
+LJ_DIR="$(dirname "$SELF")"
+JOBS="$LJ_DIR/jobs"
+PREFIX="com.tjbai."
+UID_="$(id -u)"
+DOMAIN="gui/$UID_"
+AGENTS="$HOME/Library/LaunchAgents"
+LOGDIR="$HOME/Library/Logs/tjbai"
+STATEDIR="$HOME/.local/state/lj"
+JOB_PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+LOG_MAX=$((10 * 1024 * 1024))
+
+die() { echo "lj: $*" >&2; exit 1; }
+label() { echo "$PREFIX$1"; }
+name_of() { local l="$1"; echo "${l#"$PREFIX"}"; }
+is_ours() { [[ "$1" == "$PREFIX"* ]]; }
+job_names() { local d; for d in "$JOBS"/*/; do basename "$d"; done; }
+installed_labels() { local f; for f in "$AGENTS/$PREFIX"*.plist; do basename "$f" .plist; done; }
+
+# ---- spec ------------------------------------------------------------------
+
+load_spec() { # sets INTERVAL CALENDAR KEEP_ALIVE RUN_AT_LOAD CWD DESC
+  local name="$1" f="$JOBS/$1/job"
+  [[ -f "$f" ]] || die "no such job: $name"
+  INTERVAL="" CALENDAR="" KEEP_ALIVE="" RUN_AT_LOAD="" CWD="" DESC=""
+  # shellcheck disable=SC1090
+  . "$f"
+  local kinds=0
+  [[ -n "$INTERVAL" ]] && kinds=$((kinds + 1))
+  [[ -n "$CALENDAR" ]] && kinds=$((kinds + 1))
+  [[ -n "$KEEP_ALIVE" ]] && kinds=$((kinds + 1))
+  (( kinds == 1 )) || die "$name: set exactly one of INTERVAL, CALENDAR, KEEP_ALIVE"
+  [[ -x "$JOBS/$name/run" ]] || die "$name: jobs/$name/run missing or not executable"
+}
+
+schedule_text() { # after load_spec
+  if [[ -n "$INTERVAL" ]]; then echo "every ${INTERVAL}s"
+  elif [[ -n "$CALENDAR" ]]; then echo "at $CALENDAR"
+  else echo "daemon"; fi
+}
+
+render() { # render <name> → plist on stdout
+  local name="$1"
+  load_spec "$name"
+  local l; l="$(label "$name")"
+  cat <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>$l</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>$SELF</string>
+    <string>_exec</string>
+    <string>$name</string>
+  </array>
+EOF
+  if [[ -n "$INTERVAL" ]]; then
+    echo "  <key>StartInterval</key><integer>$INTERVAL</integer>"
+  elif [[ -n "$CALENDAR" ]]; then
+    echo "  <key>StartCalendarInterval</key>"
+    echo "  <dict>"
+    local kv
+    for kv in $CALENDAR; do
+      echo "    <key>${kv%%=*}</key><integer>${kv#*=}</integer>"
+    done
+    echo "  </dict>"
+  else
+    echo "  <key>KeepAlive</key><true/>"
+  fi
+  [[ -n "$RUN_AT_LOAD" || -n "$KEEP_ALIVE" ]] && echo "  <key>RunAtLoad</key><true/>"
+  [[ -n "$CWD" ]] && echo "  <key>WorkingDirectory</key><string>$CWD</string>"
+  cat <<EOF
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>$JOB_PATH</string>
+    <key>HOME</key><string>$HOME</string>
+  </dict>
+  <key>StandardOutPath</key><string>$LOGDIR/$name.log</string>
+  <key>StandardErrorPath</key><string>$LOGDIR/$name.log</string>
+</dict>
+</plist>
+EOF
+}
+
+# ---- launchd state ---------------------------------------------------------
+
+lc_print() { launchctl print "$DOMAIN/$1" 2>/dev/null; }
+loaded() { lc_print "$1" >/dev/null; }
+disabled() { launchctl print-disabled "$DOMAIN" 2>/dev/null | grep -qF "\"$1\" => disabled"; }
+lc_field() { # lc_field <label> <field>  (e.g. "last exit code", "pid", "state", "runs")
+  lc_print "$1" | sed -n "s/^[[:space:]]*$2 = //p" | head -1 | sed 's/(never exited)/-/'
+}
+
+ago() { # ago <epoch>
+  local s=$(( $(date +%s) - $1 ))
+  if (( s < 60 )); then echo "${s}s"
+  elif (( s < 3600 )); then echo "$((s / 60))m"
+  elif (( s < 86400 )); then echo "$((s / 3600))h"
+  else echo "$((s / 86400))d"; fi
+}
+
+proc_start_epoch() { # proc_start_epoch <pid>
+  local ls; ls="$(ps -o lstart= -p "$1" 2>/dev/null)"
+  [[ -n "$ls" ]] || return 1
+  date -j -f '%a %b %d %T %Y' "$ls" +%s 2>/dev/null
+}
+
+last_run() { # last_run <name> → "ts exit dur" or empty
+  [[ -f "$STATEDIR/$1.last" ]] && cat "$STATEDIR/$1.last"
+}
+
+# ---- commands --------------------------------------------------------------
+
+cmd_apply() {
+  local prune="" a
+  for a in "$@"; do [[ "$a" == --prune ]] && prune=1; done
+  mkdir -p "$AGENTS" "$LOGDIR" "$STATEDIR"
+  local name l dst tmp changed
+  for name in $(job_names); do
+    l="$(label "$name")"; dst="$AGENTS/$l.plist"
+    tmp="$(mktemp)"
+    render "$name" > "$tmp" || { rm -f "$tmp"; exit 1; }
+    plutil -lint -s "$tmp" >/dev/null || { rm -f "$tmp"; die "$name: rendered plist is invalid"; }
+    [[ -n "$CWD" ]] && mkdir -p "$CWD"
+    changed=""
+    cmp -s "$tmp" "$dst" || changed=1
+    if [[ -n "$changed" ]]; then
+      loaded "$l" && launchctl bootout "$DOMAIN/$l" 2>/dev/null
+      mv "$tmp" "$dst"
+    else
+      rm -f "$tmp"
+    fi
+    if disabled "$l"; then
+      echo "$name: disabled (leaving it)"
+    elif ! loaded "$l"; then
+      launchctl bootstrap "$DOMAIN" "$dst" && echo "$name: ${changed:+updated, }loaded"
+    else
+      echo "$name: unchanged"
+    fi
+  done
+  if [[ -n "$prune" ]]; then
+    for l in $(installed_labels); do
+      name="$(name_of "$l")"
+      [[ -d "$JOBS/$name" ]] && continue
+      loaded "$l" && launchctl bootout "$DOMAIN/$l" 2>/dev/null
+      rm -f "$AGENTS/$l.plist"
+      echo "$name: pruned (not in repo)"
+    done
+  fi
+}
+
+row() { printf '%-20s %-9s %-9s %-14s %-9s %-6s %-5s %-22s %s\n' "$@"; }
+
+cmd_ls() {
+  local all="" a
+  for a in "$@"; do [[ "$a" == --all ]] && all=1; done
+  row NAME ENABLED LOADED STATE LAST DUR EXIT SCHEDULE LOG
+  local name l en ld st pid lr ts ex du sched logsz
+  for name in $(job_names); do
+    l="$(label "$name")"
+    load_spec "$name"; sched="$(schedule_text)"
+    en=yes; disabled "$l" && en=no
+    ld=yes; loaded "$l" || ld=no
+    pid="$(lc_field "$l" pid)"
+    if [[ -n "$pid" ]]; then
+      st="up $(ago "$(proc_start_epoch "$pid")")"; [[ -n "$KEEP_ALIVE" ]] || st="running"
+    elif [[ "$ld" == yes ]]; then st=idle
+    else st=-; fi
+    lr="$(last_run "$name")"; ts="-" ex="-" du="-"
+    if [[ -n "$lr" ]]; then
+      set -- $lr; ts="$(ago "$1") ago"; ex="$2"; du="${3}s"
+    fi
+    [[ "$ex" == "-" ]] && ex="$(lc_field "$l" 'last exit code')"
+    logsz="-"; [[ -f "$LOGDIR/$name.log" ]] && logsz="$(du -h "$LOGDIR/$name.log" | cut -f1 | tr -d ' ')"
+    row "$name" "$en" "$ld" "$st" "$ts" "$du" "${ex:--}" "$sched" "$logsz"
+  done
+  [[ -n "$all" ]] || return 0
+  echo
+  row LABEL ENABLED LOADED STATE - - EXIT - -
+  local f
+  for f in "$AGENTS"/*.plist; do
+    l="$(basename "$f" .plist)"; is_ours "$l" && continue
+    en=yes; disabled "$l" && en=no
+    ld=yes; loaded "$l" || ld=no
+    pid="$(lc_field "$l" pid)"
+    st=-; [[ "$ld" == yes ]] && st=idle; [[ -n "$pid" ]] && st="pid $pid"
+    row "$l" "$en" "$ld" "$st" - - "$(lc_field "$l" 'last exit code')" - -
+  done
+}
+
+resolve() { # resolve <name|label> → label
+  if [[ -d "$JOBS/$1" ]]; then label "$1"; else echo "$1"; fi
+}
+
+cmd_status() {
+  [[ $# -ge 1 ]] || die "usage: lj status <name|label>"
+  local l; l="$(resolve "$1")"; local name; name="$(name_of "$l")"
+  if is_ours "$l" && [[ -d "$JOBS/$name" ]]; then
+    load_spec "$name"
+    echo "== $name: ${DESC:-no description}  ($(schedule_text))"
+    echo "run:  $JOBS/$name/run"
+    local lr; lr="$(last_run "$name")"
+    if [[ -n "$lr" ]]; then set -- $lr; echo "last: $(date -r "$1" '+%Y-%m-%d %H:%M:%S') exit=$2 dur=${3}s"; fi
+    local tmp; tmp="$(mktemp)"; render "$name" > "$tmp"
+    if [[ -f "$AGENTS/$l.plist" ]]; then
+      cmp -s "$tmp" "$AGENTS/$l.plist" && echo "plist: matches repo" || { echo "plist: DRIFT (run lj apply):"; diff "$AGENTS/$l.plist" "$tmp" | head -20; }
+    else
+      echo "plist: not installed (run lj apply)"
+    fi
+    rm -f "$tmp"
+  fi
+  echo "enabled: $(disabled "$l" && echo no || echo yes)"
+  echo "== launchctl print $DOMAIN/$l"
+  lc_print "$l" | grep -E '^\s*(state|pid|program|arguments|last exit code|last exit reason|runs|run interval|working directory|stdout path) ' || echo "not loaded"
+  if is_ours "$l" && [[ -f "$LOGDIR/$name.log" ]]; then
+    echo "== tail $LOGDIR/$name.log"
+    tail -20 "$LOGDIR/$name.log"
+  fi
+}
+
+cmd_log() {
+  [[ $# -ge 1 ]] || die "usage: lj log <name> [-f]"
+  local f="$LOGDIR/$1.log"; [[ -f "$f" ]] || die "no log at $f"
+  if [[ "${2:-}" == -f ]]; then tail -f "$f"; else tail -50 "$f"; fi
+}
+
+cmd_run() {
+  [[ $# -ge 1 ]] || die "usage: lj run <name>"
+  local l; l="$(label "$1")"
+  loaded "$l" || die "$1 is not loaded (lj apply)"
+  launchctl kickstart -k "$DOMAIN/$l" || exit 1
+  sleep 2
+  tail -5 "$LOGDIR/$1.log" 2>/dev/null
+}
+
+cmd_enable() {
+  [[ $# -ge 1 ]] || die "usage: lj enable <name>"
+  local l; l="$(label "$1")"
+  launchctl enable "$DOMAIN/$l"
+  loaded "$l" || launchctl bootstrap "$DOMAIN" "$AGENTS/$l.plist"
+  echo "$1: enabled + loaded"
+}
+
+cmd_disable() {
+  [[ $# -ge 1 ]] || die "usage: lj disable <name>"
+  local l; l="$(label "$1")"
+  loaded "$l" && launchctl bootout "$DOMAIN/$l"
+  launchctl disable "$DOMAIN/$l"
+  echo "$1: disabled + unloaded (survives login; lj enable to undo)"
+}
+
+cmd_doctor() {
+  local bad=0 name l tmp lr ex ts sz pid
+  fail() { echo "FAIL $*"; bad=$((bad + 1)); }
+  ok() { echo "ok   $*"; }
+  for name in $(job_names); do
+    l="$(label "$name")"
+    if [[ ! -x "$JOBS/$name/run" ]]; then fail "$name: run missing or not executable"; continue; fi
+    load_spec "$name" || { fail "$name: bad spec"; continue; }
+    tmp="$(mktemp)"; render "$name" > "$tmp"
+    if [[ ! -f "$AGENTS/$l.plist" ]]; then fail "$name: not installed"
+    elif ! cmp -s "$tmp" "$AGENTS/$l.plist"; then fail "$name: plist drift (lj apply)"
+    else ok "$name: plist"; fi
+    rm -f "$tmp"
+    if disabled "$l"; then ok "$name: disabled (intentional)"; continue; fi
+    if ! loaded "$l"; then fail "$name: enabled but not loaded"; continue; fi
+    if [[ -n "$KEEP_ALIVE" ]]; then
+      pid="$(lc_field "$l" pid)"
+      [[ -n "$pid" ]] && ok "$name: daemon up (pid $pid)" || fail "$name: daemon not running"
+    fi
+    lr="$(last_run "$name")"
+    if [[ -n "$lr" ]]; then
+      set -- $lr; ts=$1; ex=$2
+      [[ "$ex" == 0 ]] && ok "$name: last exit 0" || fail "$name: last exit $ex"
+      if [[ -n "$INTERVAL" ]] && (( $(date +%s) - ts > INTERVAL * 2 )); then
+        fail "$name: no run in $(ago "$ts") (interval ${INTERVAL}s)"
+      fi
+    elif [[ -z "$KEEP_ALIVE" ]]; then
+      echo "warn $name: never run"
+    fi
+    if [[ -f "$LOGDIR/$name.log" ]]; then
+      sz=$(stat -f %z "$LOGDIR/$name.log")
+      (( sz > LOG_MAX )) && fail "$name: log ${sz}b > ${LOG_MAX}b"
+    fi
+    if [[ -x "$JOBS/$name/check" ]]; then
+      if out="$("$JOBS/$name/check" 2>&1)"; then ok "$name: check${out:+ — $out}"; else fail "$name: check — $out"; fi
+    fi
+  done
+  for l in $(installed_labels); do
+    [[ -d "$JOBS/$(name_of "$l")" ]] || fail "$(name_of "$l"): installed but not in repo (lj apply --prune)"
+  done
+  (( bad == 0 )) && echo "all good" || { echo "$bad problem(s)"; return 1; }
+}
+
+# ---- wrapper (invoked by launchd) ------------------------------------------
+
+cmd__exec() {
+  local name="$1"
+  local log="$LOGDIR/$name.log"
+  export PATH="$JOB_PATH"
+  mkdir -p "$LOGDIR" "$STATEDIR"
+  # launchd opens the log O_APPEND and never rotates. keep the tail.
+  if [[ -f "$log" ]] && (( $(stat -f %z "$log") > LOG_MAX )); then
+    local keep; keep="$(mktemp)"; tail -c $((LOG_MAX / 10)) "$log" > "$keep"; cat "$keep" > "$log"; rm -f "$keep"
+  fi
+  local start; start=$(date +%s)
+  echo "$(date '+%Y-%m-%d %H:%M:%S') START $name"
+  "$JOBS/$name/run" &
+  local child=$!
+  trap 'kill -TERM $child 2>/dev/null' TERM INT
+  wait "$child"; local rc=$?
+  local end; end=$(date +%s)
+  echo "$(date '+%Y-%m-%d %H:%M:%S') END $name exit=$rc dur=$((end - start))s"
+  echo "$end $rc $((end - start))" > "$STATEDIR/$name.last"
+  if (( rc != 0 )); then
+    /usr/bin/osascript -e "display notification \"$name exited $rc — lj status $name\" with title \"lj\"" >/dev/null 2>&1 || true
+  fi
+  exit $rc
+}
+
+usage() {
+  cat <<EOF
+lj — launchd jobs from $LJ_DIR/jobs
+
+  lj ls [--all]            our jobs (and, with --all, every other user agent)
+  lj status <name|label>   spec, drift, launchctl detail, log tail
+  lj log <name> [-f]       tail the job's log
+  lj run <name>            force a run now
+  lj enable|disable <name> persistent across login
+  lj apply [--prune]       render + install specs; --prune removes com.tjbai.* not in repo
+  lj doctor                health checks; exit 1 on any problem
+EOF
+}
+
+case "${1:-}" in
+  ls) shift; cmd_ls "$@" ;;
+  status) shift; cmd_status "$@" ;;
+  log|logs) shift; cmd_log "$@" ;;
+  run) shift; cmd_run "$@" ;;
+  enable) shift; cmd_enable "$@" ;;
+  disable) shift; cmd_disable "$@" ;;
+  apply) shift; cmd_apply "$@" ;;
+  doctor) shift; cmd_doctor "$@" ;;
+  _exec) shift; cmd__exec "$@" ;;
+  ""|-h|--help|help) usage ;;
+  *) die "unknown command: $1 (lj --help)" ;;
+esac

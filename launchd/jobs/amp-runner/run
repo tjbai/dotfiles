@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# a headless amp that serves remotely created threads in $PWD (~/runner, an
+# empty non-repo dir so shim threads start project-less and cheap). remote
+# threads target it with executor=runner, runner_id=bai-mbp.
+exec amp --no-tui --runner-id bai-mbp --remote-control-terminal

@@ -1,0 +1,2 @@
+CALENDAR="Hour=5 Minute=0"
+DESC="restart amp-runner onto a newer amp binary, only when no thread is working"

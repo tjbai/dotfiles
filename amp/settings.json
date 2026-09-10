@@ -1,0 +1,17 @@
+{
+  "activity_calendar_enabled": true,
+  "bonus_email_opt_in": null,
+  "dial_modes": null,
+  "experimental_feature.changes-commit-refactor": false,
+  "experimental_feature.desktop-fun-games": false,
+  "experimental_feature.exhausted-connection-switch": false,
+  "experimental_feature.mcp-server": false,
+  "experimental_feature.puck-in-threads": false,
+  "experimental_feature.short-sidebar-titles": false,
+  "experimental_feature.synced-drafts": false,
+  "experimental_feature.thread-recap": false,
+  "message_send_behavior": "steer",
+  "project_defaults.changes_workflow": "merge-to-main",
+  "project_defaults.custom_ship_prompt": "",
+  "project_defaults.orb_commit_author": "amp"
+}

@@ -1,0 +1,1 @@
+When a task needs TJ's laptop (local files, credentials, or processes), follow the `bai-mbp` runner rule in the global agent guidance: `list_runners`, then `create_thread` on runner `bai-mbp` with a tight task and ask for a reply; if the runner is absent, say so and continue.

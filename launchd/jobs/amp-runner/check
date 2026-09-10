@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# doctor hook: is the running runner on the installed amp version?
+set -u
+pid="$(launchctl print "gui/$(id -u)/com.tjbai.amp-runner" 2>/dev/null | sed -n 's/^[[:space:]]*pid = //p' | head -1)"
+[[ -n "$pid" ]] || { echo "not running"; exit 1; }
+started="$(date -j -f '%a %b %d %T %Y' "$(ps -o lstart= -p "$pid" | xargs)" +%s)"
+bin="$(stat -f %m "$HOME/.amp/bin/amp")"
+if (( bin > started )); then
+  echo "amp updated $(date -r "$bin" '+%m-%d %H:%M') but runner started $(date -r "$started" '+%m-%d %H:%M') — amp-runner-refresh will restart it when idle"
+  exit 1
+fi
+echo "runner on current amp"

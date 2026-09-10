@@ -85,8 +85,17 @@ if command -v amp >/dev/null \
 else
   echo "amp: not authenticated, skipping skills/plugins publish" >&2
 fi
+# server-side settings (agent guidance, puck, toggles) live in amp/ and are
+# repo-canonical, so update only reports drift; resolve with amp/sync pull|push.
+# skipped with UPDATE_SKIP_AMP_SYNC=1 (it costs one low-mode thread, ~1 min).
+if [[ -z "${UPDATE_SKIP_AMP_SYNC:-}" ]] && amp skills repositories >/dev/null 2>&1; then
+  "$ROOT/amp/sync" check || true
+fi
 ) >"$amplog" 2>&1 &
 amppid=$!
+
+# launchd: report only. jobs are repo-defined; `lj apply` is install's job.
+"$ROOT/launchd/lj" doctor || echo "launchd: run 'lj doctor' for details" >&2
 
 password confirm
 
