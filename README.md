@@ -37,11 +37,13 @@ no cli for these, only the amp tool inside a thread, so pull/push drive a low-mo
 launchd: every user agent is a directory under `launchd/jobs/<name>/` (`job` spec +
 `run` script + optional `check`), rendered to `~/Library/LaunchAgents/com.tjbai.*`
 by `launchd/lj` (symlinked to `~/.local/bin/lj` by install). scripts run live from
-the checkout; `lj apply` only when the spec changes. `lj ls`, `lj status`, `lj log`,
+the checkout; `lj apply` only when the spec changes. `HOSTS="work"` in a spec pins
+a job to those machines (short hostname); elsewhere `lj` ignores and prunes it, so
+one repo serves the work mac mini (`work`) and everything else. `lj ls`, `lj status`, `lj log`,
 `lj doctor` read health from the wrapper's logs and state, since launchd itself
 barely remembers anything. `./install` applies (`--prune` drops labels the repo
 doesn't define); `./update` runs `lj doctor`. jobs today: `amp-runner` keeps the
-`bai-mbp` amp runner up so orbs and puck can reach this laptop; `amp-runner-refresh`
+`work` amp runner up so orbs and puck can reach the work mac mini; `amp-runner-refresh`
 restarts it onto a newer amp binary at 5am if nothing is working.
 
 skills always keep their names. the generic ones listed in `public.txt` get published

@@ -1,6 +1,6 @@
 ---
 name: managing-launchd-jobs
-description: Defines, applies, and inspects launchd user agents on TJ's Mac through the dotfiles-managed `lj` tool. Use when asked to add a background job, cron, or daemon on the laptop, to check whether a launchd job is running or healthy, or to read a job's log. Never hand-write ~/Library/LaunchAgents plists.
+description: Defines, applies, and inspects launchd user agents on TJ's Macs (the always-on work mac mini `work`, and others) through the dotfiles-managed `lj` tool. Use when asked to add a background job, cron, or daemon on one of his machines, to check whether a launchd job is running or healthy, or to read a job's log. Never hand-write ~/Library/LaunchAgents plists.
 ---
 
 # Managing launchd jobs
@@ -29,4 +29,4 @@ Then `lj apply` (or `lj apply --prune` to also unload labels the repo no longer 
 
 - Never write or edit `~/Library/LaunchAgents/*.plist` directly, and never `launchctl load` a hand-made plist. Define the job in the repo and `lj apply`.
 - `lj disable <name>` / `lj enable <name>` to pause a job; deleting its directory plus `lj apply --prune` removes it.
-- Existing jobs: `amp-runner` (keeps the `bai-mbp` Amp runner alive) and `amp-runner-refresh` (5am restart onto a newer amp binary when idle). Do not stop `amp-runner` from a remote thread; it is the remote thread's only path to this machine.
+- Existing jobs: `amp-runner` (keeps the `work` Amp runner alive, host `work` only) and `amp-runner-refresh` (5am restart onto a newer amp binary when idle). Do not stop `amp-runner` from a remote thread; it is the remote thread's only path to this machine.

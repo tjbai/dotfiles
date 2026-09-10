@@ -3,7 +3,9 @@
 #
 # a job is a directory under launchd/jobs/<name>/ with:
 #   job   bash-sourced spec: INTERVAL=<sec> | CALENDAR="Hour=5 Minute=0 ..." | KEEP_ALIVE=1
-#         optional: RUN_AT_LOAD=1  CWD=<dir>  DESC="..."
+#         optional: RUN_AT_LOAD=1  CWD=<dir>  DESC="..."  HOSTS="work other"
+#         HOSTS limits a job to those short hostnames; elsewhere it is skipped
+#         (and pruned), so the repo can serve every machine.
 #   run   the executable. runs straight from the checkout, so edits are live
 #         on the next tick; only spec changes need `lj apply`.
 #
@@ -34,15 +36,18 @@ die() { echo "lj: $*" >&2; exit 1; }
 label() { echo "$PREFIX$1"; }
 name_of() { local l="$1"; echo "${l#"$PREFIX"}"; }
 is_ours() { [[ "$1" == "$PREFIX"* ]]; }
-job_names() { local d; for d in "$JOBS"/*/; do basename "$d"; done; }
+HOST="$(hostname -s)"
+job_here() { load_spec "$1"; [[ -z "$HOSTS" || " $HOSTS " == *" $HOST "* ]]; }
+job_names() { local d n; for d in "$JOBS"/*/; do n="$(basename "$d")"; job_here "$n" && echo "$n"; done; }
+job_names_elsewhere() { local d n; for d in "$JOBS"/*/; do n="$(basename "$d")"; job_here "$n" || echo "$n"; done; }
 installed_labels() { local f; for f in "$AGENTS/$PREFIX"*.plist; do basename "$f" .plist; done; }
 
 # ---- spec ------------------------------------------------------------------
 
-load_spec() { # sets INTERVAL CALENDAR KEEP_ALIVE RUN_AT_LOAD CWD DESC
+load_spec() { # sets INTERVAL CALENDAR KEEP_ALIVE RUN_AT_LOAD CWD DESC HOSTS
   local name="$1" f="$JOBS/$1/job"
   [[ -f "$f" ]] || die "no such job: $name"
-  INTERVAL="" CALENDAR="" KEEP_ALIVE="" RUN_AT_LOAD="" CWD="" DESC=""
+  INTERVAL="" CALENDAR="" KEEP_ALIVE="" RUN_AT_LOAD="" CWD="" DESC="" HOSTS=""
   # shellcheck disable=SC1090
   . "$f"
   local kinds=0
@@ -163,10 +168,10 @@ cmd_apply() {
   if [[ -n "$prune" ]]; then
     for l in $(installed_labels); do
       name="$(name_of "$l")"
-      [[ -d "$JOBS/$name" ]] && continue
+      [[ -d "$JOBS/$name" ]] && job_here "$name" && continue
       loaded "$l" && launchctl bootout "$DOMAIN/$l" 2>/dev/null
       rm -f "$AGENTS/$l.plist"
-      echo "$name: pruned (not in repo)"
+      echo "$name: pruned (not in repo, or not for host $HOST)"
     done
   fi
 }
@@ -196,6 +201,8 @@ cmd_ls() {
     logsz="-"; [[ -f "$LOGDIR/$name.log" ]] && logsz="$(du -h "$LOGDIR/$name.log" | cut -f1 | tr -d ' ')"
     row "$name" "$en" "$ld" "$st" "$ts" "$du" "${ex:--}" "$sched" "$logsz"
   done
+  local elsewhere; elsewhere="$(job_names_elsewhere | tr '\n' ' ')"
+  [[ -n "$elsewhere" ]] && echo "(not for host $HOST: $elsewhere)"
   [[ -n "$all" ]] || return 0
   echo
   row LABEL ENABLED LOADED STATE - - EXIT - -
@@ -286,11 +293,14 @@ cmd_doctor() {
     rm -f "$tmp"
     if disabled "$l"; then ok "$name: disabled (intentional)"; continue; fi
     if ! loaded "$l"; then fail "$name: enabled but not loaded"; continue; fi
-    if [[ -n "$KEEP_ALIVE" ]]; then
-      pid="$(lc_field "$l" pid)"
-      [[ -n "$pid" ]] && ok "$name: daemon up (pid $pid)" || fail "$name: daemon not running"
-    fi
     lr="$(last_run "$name")"
+    if [[ -n "$KEEP_ALIVE" ]]; then
+      # a daemon that is up is healthy; its previous exit (143 after a
+      # kickstart -k restart, say) is only interesting when it is down.
+      pid="$(lc_field "$l" pid)"
+      if [[ -n "$pid" ]]; then ok "$name: daemon up (pid $pid)"; lr=""
+      else fail "$name: daemon not running"; fi
+    fi
     if [[ -n "$lr" ]]; then
       set -- $lr; ts=$1; ex=$2
       [[ "$ex" == 0 ]] && ok "$name: last exit 0" || fail "$name: last exit $ex"
@@ -309,7 +319,8 @@ cmd_doctor() {
     fi
   done
   for l in $(installed_labels); do
-    [[ -d "$JOBS/$(name_of "$l")" ]] || fail "$(name_of "$l"): installed but not in repo (lj apply --prune)"
+    name="$(name_of "$l")"
+    [[ -d "$JOBS/$name" ]] && job_here "$name" || fail "$name: installed but not in repo or not for host $HOST (lj apply --prune)"
   done
   (( bad == 0 )) && echo "all good" || { echo "$bad problem(s)"; return 1; }
 }

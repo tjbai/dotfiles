@@ -1,3 +1,4 @@
 KEEP_ALIVE=1
 CWD="$HOME/runner"
-DESC="amp runner 'bai-mbp': lets orbs and puck run threads on this laptop"
+HOSTS="work"
+DESC="amp runner 'work': lets orbs and puck run threads on the work mac mini"
