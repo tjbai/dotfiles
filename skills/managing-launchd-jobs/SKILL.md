@@ -29,4 +29,4 @@ Then `lj apply` (or `lj apply --prune` to also unload labels the repo no longer 
 
 - Never write or edit `~/Library/LaunchAgents/*.plist` directly, and never `launchctl load` a hand-made plist. Define the job in the repo and `lj apply`.
 - `lj disable <name>` / `lj enable <name>` to pause a job; deleting its directory plus `lj apply --prune` removes it.
-- Existing jobs: `amp-runner` (keeps the `work` Amp runner alive, host `work` only) and `amp-runner-refresh` (5am restart onto a newer amp binary when idle). Do not stop `amp-runner` from a remote thread; it is the remote thread's only path to this machine.
+- Existing jobs: `amp-runner` (keeps the `work` Amp runner alive, host `work` only), `amp-runner-refresh` (5am restart onto a newer amp binary when idle), and `scratch-fold` (hourly; folds the scratch repo's `inbox` branch into `main`, one commit per project dir per closed 4h window — protocol in the using-scratch skill). Do not stop `amp-runner` from a remote thread; it is the remote thread's only path to this machine.
