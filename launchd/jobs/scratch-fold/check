@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# doctor hook: is the fold keeping up, and is the vault on the inbox branch?
+set -u
+repo="$HOME/auctor/scratch"
+[[ -d "$repo/.git" ]] || { echo "no checkout at $repo"; exit 1; }
+git -C "$repo" fetch --quiet origin main inbox 2>/dev/null || { echo "fetch failed"; exit 1; }
+branch="$(git -C "$repo" rev-parse --abbrev-ref HEAD)"
+[[ "$branch" == inbox ]] || { echo "vault on '$branch', expected inbox"; exit 1; }
+# anything on inbox older than two windows should have been folded by now.
+stale="$(git -C "$repo" rev-list --count --before="8 hours ago" origin/main..origin/inbox)"
+if (( stale > 0 )); then
+  echo "$stale unfolded commit(s) older than 8h on inbox — lj log scratch-fold"
+  exit 1
+fi
+echo "inbox $(git -C "$repo" rev-list --count origin/main..origin/inbox) ahead, all recent"

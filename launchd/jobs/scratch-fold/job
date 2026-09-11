@@ -1,0 +1,3 @@
+CALENDAR="Minute=7"
+HOSTS="work"
+DESC="fold scratch's inbox branch into main: one commit per project dir per closed 4h window"
