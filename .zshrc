@@ -136,8 +136,14 @@ alias ghpr="gh pr create --base"
 alias tsc="npx tsc --noEmit -p tsconfig.json"
 alias codexh="codex --model=gpt-5-codex -c model_reasoning_effort=\"high\""
 alias test="uvpy -m pytest"
-alias allnight="caffeinate -dis -t 43200"
 
+allnight() {
+  if [[ -z "$1" ]]; then
+    caffeinate -dis
+  else
+    caffeinate -dis -t $(printf '%.0f' $(( $1 * 3600 )))
+  fi
+}
 lsp() { lsof -i :$1 }
 klsp() { lsof -i :$1 | awk 'NR>1 {print $2}' | xargs -r kill -9 }
 gaws() { git diff -U0 -w --no-color "$@" | git apply --cached --ignore-whitespace --unidiff-zero - }
