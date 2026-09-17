@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+  "name": "amp tweaks",
+  "version": "0.2",
+  "description": "css overrides for ampcode.com: no selection toolbar, aui-style type and markdown rhythm",
+  "browser_specific_settings": {
+    "gecko": { "id": "amp-tweaks@tjbai", "data_collection_permissions": { "required": ["none"] } }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://ampcode.com/*"],
+      "css": ["amp.css"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": ["fonts/*.woff2"]
+}

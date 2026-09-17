@@ -57,11 +57,11 @@ pull_live() {
 }
 
 live_keys() { jq -r '.[].key' "$LIVE"; }
-live_value() { jq -c --arg k "$1" '.[] | select(.key==$k) | .value' "$LIVE"; }   # JSON literal
+live_value() { jq -cS --arg k "$1" '.[] | select(.key==$k) | .value' "$LIVE"; }  # JSON literal, keys sorted
 live_text() { jq -r --arg k "$1" '.[] | select(.key==$k) | .value // ""' "$LIVE"; } # raw string, null → ""
 
 repo_text() { local f; f="$(text_file "$1")"; [[ -f "$f" ]] && cat "$f" || true; }
-repo_value() { jq -c --arg k "$1" 'if has($k) then .[$k] else null end' "$DIR/settings.json" 2>/dev/null || echo null; }
+repo_value() { jq -cS --arg k "$1" 'if has($k) then .[$k] else null end' "$DIR/settings.json" 2>/dev/null || echo null; }
 
 # strip one trailing newline so files (which end in \n) compare equal to server strings
 norm() { printf '%s' "$1" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' ; }

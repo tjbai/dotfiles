@@ -11,6 +11,8 @@
   "experimental_feature.thread-recap": true,
   "keyboard_shortcuts": {
     "show-thread-chat": "ctrl+i",
+    "sidebar-switch-to-next-thread": ["ctrl+]", "mod+shift+]"],
+    "sidebar-switch-to-previous-thread": ["ctrl+[", "mod+shift+["],
     "toggle-thread-right-panel": "shift+mod+b"
   },
   "message_send_behavior": "steer",

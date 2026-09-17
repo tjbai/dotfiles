@@ -58,6 +58,19 @@ into `vault/firefox/`. `./install` decrypts them back and sets the one-shot impo
 bookmarks appear on next launch. firefox must be closed during install. first-ever
 export needs one firefox restart after running update.
 
+`firefox/amp-tweaks/` is a css-only extension for ampcode.com that pushes it toward
+`~/dev/aui`: kills the floating selection toolbar (reply/dictate/copy/link), swaps the
+body font to a bundled Inter Variable (450, cv01/ss03), pins `--amp-text-size-scale`
+to .92 (~12px body, what 80% zoom felt like, without zoom shrinking the column), rewrites the transcript markdown rhythm (obsidian-style block gaps, flat
+600-weight headings, hairline pre), flattens the user-message glow (`.alchemy-glow`),
+and widens the reading column from amp's 39rem to `--tj-column` (54rem = 864px).
+load it from `about:debugging#/runtime/this-firefox` → "Load Temporary Add-on…" →
+pick `manifest.json`; it's gone on restart, reload it. edit `amp.css`, hit "Reload"
+there. keybinds are not css: those live in amp's own keymap (`keyboard_shortcuts` in
+`amp/settings.json`, synced like the rest). thread next/prev is `ctrl+]` / `ctrl+[`
+because firefox handles ctrl+tab, cmd+shift+[ ], and cmd+opt+arrows in its system
+event group and ignores the page's preventDefault, so amp never sees them.
+
 raycast: no headless export, so it's a two-step. run "Export Settings & Data" in
 raycast (save to ~/Downloads or ~/Desktop), then `./update` picks up the newest
 .rayconfig and re-encrypts it into `vault/raycast/` with the dotfiles password (raycast's
@@ -92,6 +105,7 @@ private.txt   $HOME-relative files to encrypt
 skills/       skills — <name>/ plaintext if public, <name>.enc if not
 amp/          server-side amp settings: sync script, guidance + puck .md, settings.json, secret names
 launchd/      lj (the tool) + jobs/<name>/{job,run,check}
+firefox/      amp-tweaks/ — css-only extension for ampcode.com, loaded via about:debugging
 vault/        everything encrypted, nothing home-mirrored:
   private/    encrypted private files
   firefox/    encrypted bookmarks + search shortcuts

@@ -1,0 +1,181 @@
+/* ampcode.com, pushed toward ~/dev/aui (docs/product-style.md). selectors come from
+   amp's shipped bundle: `.markdown` is the transcript renderer, `[data-testid]` and
+   `data-*` hooks are stable across builds, the svelte-* hashes are not — so every
+   rule is !important to beat amp's hashed specificity. */
+
+/* ── kill: the floating reply / dictate / copy / link toolbar on text selection ── */
+[data-testid="transcript-selection-actions"] {
+  display: none !important;
+}
+
+/* ── fonts: inter variable (bundled, latin subset), berkeley mono stays (amp serves it) ── */
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("moz-extension://__MSG_@@extension_id__/fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter Variable";
+  font-style: italic;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("moz-extension://__MSG_@@extension_id__/fonts/inter-latin-wght-italic.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  --font-sans: "Inter Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  --default-font-family: var(--font-sans) !important;
+
+  /* amp's base is 13px and everything scales off --amp-text-size-scale (settings →
+     appearance offers .9/1.1/1.25/1.4). 1.15 was aui's 15px body; the natural size
+     turned out to be that at 80% zoom, so 1.15 * .8 = .92 ≈ 12px, at 100% zoom so
+     the rem-based column below keeps its width. wins over the appearance setting. */
+  --amp-text-size-scale: 0.92 !important;
+}
+
+/* aui's ink: slightly heavy (450) with linear's inter alternates. tailwind's
+   font-normal (400) sits on many wrappers, so re-assert inside the transcript. */
+body,
+.markdown {
+  font-weight: 450 !important;
+  font-feature-settings: "cv01", "ss03" !important;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── markdown rhythm: obsidian reading view, per aui ──
+   full block gap between paragraphs, extra air before headings, tight inside lists. */
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4 {
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.3 !important;
+  margin: 1.6em 0 0.5em !important;
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+}
+/* 20 / 17 / 15.5 / 15 over a 15px body */
+.markdown h1 { font-size: 1.33em !important; }
+.markdown h2 { font-size: 1.13em !important; }
+.markdown h3 { font-size: 1.03em !important; }
+.markdown h4 { font-size: 1em !important; }
+
+.markdown p {
+  margin: 0.9em 0 !important;
+}
+.markdown ul,
+.markdown ol {
+  margin: 0.9em 0 !important;
+  padding-left: 1.4em !important;
+}
+.markdown li {
+  margin: 0.15em 0 !important;
+  padding-left: 0 !important;
+}
+.markdown li > p {
+  margin: 0 !important; /* loose lists: li spacing is the rhythm, not paragraph gaps */
+}
+/* amp collapses p:first/last-child margins; the !important rules above undo that
+   and a one-paragraph turn then carries .9em of dead air on each end, stacking on
+   the entry gap. re-collapse every block at the edges of a message. */
+.markdown > :first-child {
+  margin-top: 0 !important;
+}
+.markdown > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.markdown strong {
+  font-weight: 600 !important; /* amp: 700 */
+}
+
+.markdown a {
+  text-decoration: none !important;
+}
+.markdown a:hover {
+  text-decoration: underline !important;
+}
+
+.markdown code {
+  font-size: 0.95em !important;
+}
+.markdown pre {
+  border: 1px solid var(--border) !important;
+  border-radius: 4px !important;
+  padding: 12px 14px !important;
+  font-size: 0.95em !important; /* ~11.5px over a 12px body; berkeley mono sets small */
+  line-height: 1.6 !important;
+  margin: 0.9em 0 !important;
+}
+.markdown pre code {
+  font-size: inherit !important;
+}
+
+.markdown blockquote {
+  border-left-width: 3px !important;
+  padding: 0 0 0 12px !important;
+  margin: 0.9em 0 !important;
+}
+
+.markdown table {
+  font-size: 0.9em !important;
+  border-radius: 4px !important;
+}
+
+/* ── code: berkeley mono (TX-02 variable) has its own stylistic sets, so the inter
+   cv01/ss03 + 450 weight inherited from body/.markdown mangles it. reset. ── */
+.markdown code,
+.markdown pre,
+.markdown kbd {
+  font-family: var(--font-mono, "Berkeley Mono", ui-monospace, monospace) !important;
+  font-weight: 400 !important;
+  font-feature-settings: normal !important;
+}
+
+/* ── user messages: flat, no glow ──
+   amp paints the user bubble with `.alchemy-glow`: three radial gradients + a grain
+   png under soft-light blend, on a tinted background. replace with the plain
+   secondary surface and the normal foreground. */
+.alchemy-glow {
+  background-image: none !important;
+  background-color: var(--color-secondary, var(--secondary)) !important;
+  background-blend-mode: normal !important;
+  color: var(--foreground) !important;
+}
+.alchemy-glow.alchemy-hairline {
+  --alchemy-hairline-opacity: 0 !important;
+}
+
+/* ── reading column ──
+   amp's is 39rem (624px): the transcript grid sets
+   `grid-template-columns: minmax(0,1fr) minmax(0,39rem) max(3rem, …)` inline, and
+   when thread comments are off the wrapper is `max-w-2xl` (42rem incl. 1.5rem
+   padding each side). the composer wrapper is `max-w-2xl` too. 54rem = 864px. */
+:root {
+  --tj-column: 54rem;
+}
+[data-transcript-entry-list].transcript-comments-grid {
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, var(--tj-column))
+    max(3rem, calc((100% - var(--tj-column)) / 2)) !important;
+}
+/* .thread-chat-scroll-region holds the scroll div and, as a sibling, the floating
+   toc / jump-to-bottom pill (`justify-end` inside its own max-w-2xl wrapper). */
+.thread-chat-scroll-region .max-w-2xl,
+[data-thread-transcript-scroll] .max-w-2xl,
+.max-w-2xl:has([data-message-composer-root]) {
+  max-width: calc(var(--tj-column) + 3rem) !important;
+}
+
+/* ── code editor / diff views (codemirror). settings → appearance writes these; pin here. ──
+:root {
+  --app-code-font-size: 0.78rem !important;
+  --app-code-line-height: 1.45 !important;
+}
+*/
