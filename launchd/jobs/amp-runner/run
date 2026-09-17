@@ -2,4 +2,8 @@
 # a headless amp that serves remotely created threads in $PWD (~/runner, an
 # empty non-repo dir so shim threads start project-less and cheap). remote
 # threads target it with executor=runner, runner_id=work.
+#
+# updates: amp.runner.autoUpdate.enabled is set in ~/.config/amp/settings.json,
+# so the runner installs new releases itself and re-execs in place once no
+# thread is mid-turn (at most every 12h). KeepAlive is only for crashes.
 exec amp --no-tui --runner-id work --remote-control-terminal

@@ -1,12 +1,20 @@
 #!/usr/bin/env bash
-# doctor hook: is the running runner on the installed amp version?
+# doctor hook: is the running runner on the installed amp binary?
+#
+# amp self-updates (amp.runner.autoUpdate.enabled): it downloads the new binary
+# to ~/.amp/bin/amp by rename, then once idle re-execs itself in place, so the
+# pid and process start time do not change. comparing mtime to start time
+# therefore lies; compare the inode the process actually mapped instead.
 set -u
-pid="$(launchctl print "gui/$(id -u)/com.tjbai.amp-runner" 2>/dev/null | sed -n 's/^[[:space:]]*pid = //p' | head -1)"
-[[ -n "$pid" ]] || { echo "not running"; exit 1; }
-started="$(date -j -f '%a %b %d %T %Y' "$(ps -o lstart= -p "$pid" | xargs)" +%s)"
-bin="$(stat -f %m "$HOME/.amp/bin/amp")"
-if (( bin > started )); then
-  echo "amp updated $(date -r "$bin" '+%m-%d %H:%M') but runner started $(date -r "$started" '+%m-%d %H:%M') — amp-runner-refresh will restart it when idle"
+label="gui/$(id -u)/com.tjbai.amp-runner"
+pid="$(pgrep -f 'amp --no-tui --runner-id work' | head -1)"
+[[ -n "$pid" ]] || { echo "runner process not found"; exit 1; }
+bin="$HOME/.amp/bin/amp"
+running="$(lsof -p "$pid" 2>/dev/null | awk -v b="$bin" '$4=="txt" && $NF==b {print $8; exit}')"
+[[ -n "$running" ]] || { echo "could not read mapped binary for pid $pid"; exit 1; }
+installed="$(stat -f %i "$bin")"
+if [[ "$running" != "$installed" ]]; then
+  echo "amp updated $(date -r "$(stat -f %m "$bin")" '+%m-%d %H:%M') but runner still on the old binary — amp restarts itself once idle, at most every 12h"
   exit 1
 fi
-echo "runner on current amp"
+echo "runner on current amp ($(amp --version 2>/dev/null | cut -d' ' -f1))"
