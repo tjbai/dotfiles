@@ -1,0 +1,71 @@
+/* ==UserStyle==
+@name         ampcode Gruvbox Dark
+@namespace    tjbai/amp-web-themes
+@version      1.1.0
+@description  Gruvbox Dark palette for ampcode.com, ported from sentinel.
+==/UserStyle== */
+@-moz-document domain("ampcode.com") {
+  :root, [data-amp-content-theme] {
+    color-scheme: dark !important;
+    --background: #282828 !important;
+    --foreground: #ebdbb2 !important;
+    --border: #504945 !important;
+    --muted: #3c3836 !important;
+    --muted-foreground: #a89984 !important;
+    --card: #32302f !important;
+    --popover: #32302f !important;
+    --input-background: #32302f !important;
+    --input-border: #504945 !important;
+    --primary: #ebdbb2 !important;
+    --primary-hover: #a89984 !important;
+    --primary-foreground: #282828 !important;
+    --secondary: #3c3836 !important;
+    --secondary-hover: #504945 !important;
+    --secondary-foreground: #ebdbb2 !important;
+    --accent: #3c3836 !important;
+    --accent-foreground: #ebdbb2 !important;
+    --ring: #83a598 !important;
+    --link: #83a598 !important;
+    --brand: #fe8019 !important;
+    --mention: #d3869b !important;
+    --success: #b8bb26 !important;
+    --warning: #fabd2f !important;
+    --warning-foreground: #282828 !important;
+    --warning-border: #fabd2f !important;
+    --destructive: #fb4934 !important;
+    --destructive-background: #fb4934 !important;
+    --destructive-foreground: #282828 !important;
+    --selection-background: color-mix(in oklab, #83a598 30%, transparent) !important;
+    --transcript-selection-background: color-mix(in oklab, #b8bb26 30%, transparent) !important;
+    --linked-passage-background: color-mix(in oklab, #d3869b 25%, transparent) !important;
+    --editor-background: #32302f !important;
+    --editor-foreground: #ebdbb2 !important;
+    --diff-addition-background: color-mix(in oklab, #b8bb26 18%, #282828) !important;
+    --diff-removal-background: color-mix(in oklab, #fb4934 18%, #282828) !important;
+    --diff-addition-foreground: #b8bb26 !important;
+    --diff-removal-foreground: #fb4934 !important;
+    --diff-meta-foreground: #fabd2f !important;
+    --hljs-function: #83a598 !important;
+    --hljs-keyword: #d3869b !important;
+    --hljs-class: #fabd2f !important;
+    --hljs-string: #b8bb26 !important;
+    --hljs-comment: #928374 !important;
+    --hljs-number: #fe8019 !important;
+    --terminal-black: #504945 !important;
+    --terminal-red: #fb4934 !important;
+    --terminal-green: #b8bb26 !important;
+    --terminal-yellow: #fabd2f !important;
+    --terminal-blue: #83a598 !important;
+    --terminal-magenta: #d3869b !important;
+    --terminal-cyan: #8ec07c !important;
+    --terminal-white: #a89984 !important;
+    --terminal-bright-black: #928374 !important;
+    --terminal-bright-red: #fb4934 !important;
+    --terminal-bright-green: #b8bb26 !important;
+    --terminal-bright-yellow: #fabd2f !important;
+    --terminal-bright-blue: #83a598 !important;
+    --terminal-bright-magenta: #d3869b !important;
+    --terminal-bright-cyan: #8ec07c !important;
+    --terminal-bright-white: #ebdbb2 !important;
+  }
+}

@@ -1,0 +1,30 @@
+# everforest dark medium — ported from sentinel/ui/src/index.css (.everforest)
+name = "everforest"
+mode = "dark"
+
+[colors]
+background = "#2d353b"
+foreground = "#d3c6aa"
+primary = "#7fbbb3"
+secondary = "#d699b6"
+accent = "#83c092"
+success = "#a7c080"
+warning = "#dbbc7f"
+info = "#83c092"
+destructive = "#e67e80"
+
+[ui]
+muted_foreground = "#859289"
+border = "#475258"
+cursor = "#d3c6aa"
+selection = "#3d484d"
+
+[syntax]
+keyword = "#e67e80"
+string = "#a7c080"
+number = "#d699b6"
+comment = "#7a8478"
+function = "#7fbbb3"
+variable = "#d3c6aa"
+type = "#dbbc7f"
+operator = "#e69875"

@@ -1,0 +1,30 @@
+# nordfox — ported from sentinel/ui/src/index.css (.nordfox)
+name = "nordfox"
+mode = "dark"
+
+[colors]
+background = "#2e3440"
+foreground = "#cdcecf"
+primary = "#81a1c1"
+secondary = "#b48ead"
+accent = "#88c0d0"
+success = "#a3be8c"
+warning = "#ebcb8b"
+info = "#88c0d0"
+destructive = "#bf616a"
+
+[ui]
+muted_foreground = "#7e8a9e"
+border = "#434c5e"
+cursor = "#cdcecf"
+selection = "#3b4252"
+
+[syntax]
+keyword = "#b48ead"
+string = "#a3be8c"
+number = "#d08770"
+comment = "#60728a"
+function = "#81a1c1"
+variable = "#cdcecf"
+type = "#ebcb8b"
+operator = "#88c0d0"

@@ -1,0 +1,71 @@
+/* ==UserStyle==
+@name         ampcode Kanagawa Wave
+@namespace    tjbai/amp-web-themes
+@version      1.1.0
+@description  Kanagawa Wave palette for ampcode.com, ported from sentinel.
+==/UserStyle== */
+@-moz-document domain("ampcode.com") {
+  :root, [data-amp-content-theme] {
+    color-scheme: dark !important;
+    --background: #1f1f28 !important;
+    --foreground: #dcd7ba !important;
+    --border: #363646 !important;
+    --muted: #2a2a37 !important;
+    --muted-foreground: #938a80 !important;
+    --card: #26262f !important;
+    --popover: #26262f !important;
+    --input-background: #26262f !important;
+    --input-border: #363646 !important;
+    --primary: #dcd7ba !important;
+    --primary-hover: #938a80 !important;
+    --primary-foreground: #1f1f28 !important;
+    --secondary: #2a2a37 !important;
+    --secondary-hover: #363646 !important;
+    --secondary-foreground: #dcd7ba !important;
+    --accent: #2a2a37 !important;
+    --accent-foreground: #dcd7ba !important;
+    --ring: #7e9cd8 !important;
+    --link: #7e9cd8 !important;
+    --brand: #ffa066 !important;
+    --mention: #957fb8 !important;
+    --success: #98bb6c !important;
+    --warning: #e6c384 !important;
+    --warning-foreground: #1f1f28 !important;
+    --warning-border: #e6c384 !important;
+    --destructive: #ff5d62 !important;
+    --destructive-background: #ff5d62 !important;
+    --destructive-foreground: #1f1f28 !important;
+    --selection-background: color-mix(in oklab, #7e9cd8 30%, transparent) !important;
+    --transcript-selection-background: color-mix(in oklab, #98bb6c 30%, transparent) !important;
+    --linked-passage-background: color-mix(in oklab, #957fb8 25%, transparent) !important;
+    --editor-background: #26262f !important;
+    --editor-foreground: #dcd7ba !important;
+    --diff-addition-background: color-mix(in oklab, #98bb6c 18%, #1f1f28) !important;
+    --diff-removal-background: color-mix(in oklab, #ff5d62 18%, #1f1f28) !important;
+    --diff-addition-foreground: #98bb6c !important;
+    --diff-removal-foreground: #ff5d62 !important;
+    --diff-meta-foreground: #e6c384 !important;
+    --hljs-function: #7e9cd8 !important;
+    --hljs-keyword: #957fb8 !important;
+    --hljs-class: #e6c384 !important;
+    --hljs-string: #98bb6c !important;
+    --hljs-comment: #727169 !important;
+    --hljs-number: #ffa066 !important;
+    --terminal-black: #363646 !important;
+    --terminal-red: #ff5d62 !important;
+    --terminal-green: #98bb6c !important;
+    --terminal-yellow: #e6c384 !important;
+    --terminal-blue: #7e9cd8 !important;
+    --terminal-magenta: #957fb8 !important;
+    --terminal-cyan: #7fb4ca !important;
+    --terminal-white: #938a80 !important;
+    --terminal-bright-black: #727169 !important;
+    --terminal-bright-red: #ff5d62 !important;
+    --terminal-bright-green: #98bb6c !important;
+    --terminal-bright-yellow: #e6c384 !important;
+    --terminal-bright-blue: #7e9cd8 !important;
+    --terminal-bright-magenta: #957fb8 !important;
+    --terminal-bright-cyan: #7fb4ca !important;
+    --terminal-bright-white: #dcd7ba !important;
+  }
+}

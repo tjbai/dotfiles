@@ -1,0 +1,71 @@
+/* ==UserStyle==
+@name         ampcode Catppuccin Mocha
+@namespace    tjbai/amp-web-themes
+@version      1.1.0
+@description  Catppuccin Mocha palette for ampcode.com, ported from sentinel.
+==/UserStyle== */
+@-moz-document domain("ampcode.com") {
+  :root, [data-amp-content-theme] {
+    color-scheme: dark !important;
+    --background: #1e1e2e !important;
+    --foreground: #cdd6f4 !important;
+    --border: #45475a !important;
+    --muted: #313244 !important;
+    --muted-foreground: #9399b2 !important;
+    --card: #262637 !important;
+    --popover: #262637 !important;
+    --input-background: #262637 !important;
+    --input-border: #45475a !important;
+    --primary: #cdd6f4 !important;
+    --primary-hover: #9399b2 !important;
+    --primary-foreground: #1e1e2e !important;
+    --secondary: #313244 !important;
+    --secondary-hover: #45475a !important;
+    --secondary-foreground: #cdd6f4 !important;
+    --accent: #313244 !important;
+    --accent-foreground: #cdd6f4 !important;
+    --ring: #89b4fa !important;
+    --link: #89b4fa !important;
+    --brand: #fab387 !important;
+    --mention: #cba6f7 !important;
+    --success: #a6e3a1 !important;
+    --warning: #f9e2af !important;
+    --warning-foreground: #1e1e2e !important;
+    --warning-border: #f9e2af !important;
+    --destructive: #f38ba8 !important;
+    --destructive-background: #f38ba8 !important;
+    --destructive-foreground: #1e1e2e !important;
+    --selection-background: color-mix(in oklab, #89b4fa 30%, transparent) !important;
+    --transcript-selection-background: color-mix(in oklab, #a6e3a1 30%, transparent) !important;
+    --linked-passage-background: color-mix(in oklab, #cba6f7 25%, transparent) !important;
+    --editor-background: #262637 !important;
+    --editor-foreground: #cdd6f4 !important;
+    --diff-addition-background: color-mix(in oklab, #a6e3a1 18%, #1e1e2e) !important;
+    --diff-removal-background: color-mix(in oklab, #f38ba8 18%, #1e1e2e) !important;
+    --diff-addition-foreground: #a6e3a1 !important;
+    --diff-removal-foreground: #f38ba8 !important;
+    --diff-meta-foreground: #f9e2af !important;
+    --hljs-function: #89b4fa !important;
+    --hljs-keyword: #cba6f7 !important;
+    --hljs-class: #f9e2af !important;
+    --hljs-string: #a6e3a1 !important;
+    --hljs-comment: #6c7086 !important;
+    --hljs-number: #fab387 !important;
+    --terminal-black: #45475a !important;
+    --terminal-red: #f38ba8 !important;
+    --terminal-green: #a6e3a1 !important;
+    --terminal-yellow: #f9e2af !important;
+    --terminal-blue: #89b4fa !important;
+    --terminal-magenta: #cba6f7 !important;
+    --terminal-cyan: #89dceb !important;
+    --terminal-white: #9399b2 !important;
+    --terminal-bright-black: #6c7086 !important;
+    --terminal-bright-red: #f38ba8 !important;
+    --terminal-bright-green: #a6e3a1 !important;
+    --terminal-bright-yellow: #f9e2af !important;
+    --terminal-bright-blue: #89b4fa !important;
+    --terminal-bright-magenta: #cba6f7 !important;
+    --terminal-bright-cyan: #89dceb !important;
+    --terminal-bright-white: #cdd6f4 !important;
+  }
+}

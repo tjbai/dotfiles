@@ -14,10 +14,11 @@ mkdir -p "$ROOT/.config/nvim" && cp -r ~/.config/nvim/* "$ROOT/.config/nvim/"
 mkdir -p "$ROOT/.config/neovide" && cp -r ~/.config/neovide/* "$ROOT/.config/neovide/"
 mkdir -p "$ROOT/.config/ghostty" && cp -r ~/.config/ghostty/* "$ROOT/.config/ghostty/"
 
-# amp: settings + hand-written plugins. plugins amp auto-updates from
+# amp: settings + themes + hand-written plugins. plugins amp auto-updates from
 # ampcode.com (marked on line 1) restore themselves, so they stay out.
 mkdir -p "$ROOT/.config/amp/plugins"
 cp ~/.config/amp/settings.json "$ROOT/.config/amp/settings.json"
+[[ -d ~/.config/amp/themes ]] && cp -r ~/.config/amp/themes "$ROOT/.config/amp/themes"
 for f in ~/.config/amp/plugins/*.ts ~/.config/amp/plugins/*.js; do
   head -1 "$f" | grep -qF '@amp-plugin updated automatically' && continue
   cp "$f" "$ROOT/.config/amp/plugins/"

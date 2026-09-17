@@ -1,0 +1,71 @@
+/* ==UserStyle==
+@name         ampcode Rosé Pine
+@namespace    tjbai/amp-web-themes
+@version      1.1.0
+@description  Rosé Pine palette for ampcode.com, ported from sentinel.
+==/UserStyle== */
+@-moz-document domain("ampcode.com") {
+  :root, [data-amp-content-theme] {
+    color-scheme: dark !important;
+    --background: #191724 !important;
+    --foreground: #e0def4 !important;
+    --border: #403d52 !important;
+    --muted: #26233a !important;
+    --muted-foreground: #908caa !important;
+    --card: #1f1d2e !important;
+    --popover: #1f1d2e !important;
+    --input-background: #1f1d2e !important;
+    --input-border: #403d52 !important;
+    --primary: #e0def4 !important;
+    --primary-hover: #908caa !important;
+    --primary-foreground: #191724 !important;
+    --secondary: #26233a !important;
+    --secondary-hover: #403d52 !important;
+    --secondary-foreground: #e0def4 !important;
+    --accent: #26233a !important;
+    --accent-foreground: #e0def4 !important;
+    --ring: #9ccfd8 !important;
+    --link: #9ccfd8 !important;
+    --brand: #ebbcba !important;
+    --mention: #c4a7e7 !important;
+    --success: #56949f !important;
+    --warning: #f6c177 !important;
+    --warning-foreground: #191724 !important;
+    --warning-border: #f6c177 !important;
+    --destructive: #eb6f92 !important;
+    --destructive-background: #eb6f92 !important;
+    --destructive-foreground: #191724 !important;
+    --selection-background: color-mix(in oklab, #9ccfd8 30%, transparent) !important;
+    --transcript-selection-background: color-mix(in oklab, #56949f 30%, transparent) !important;
+    --linked-passage-background: color-mix(in oklab, #c4a7e7 25%, transparent) !important;
+    --editor-background: #1f1d2e !important;
+    --editor-foreground: #e0def4 !important;
+    --diff-addition-background: color-mix(in oklab, #56949f 18%, #191724) !important;
+    --diff-removal-background: color-mix(in oklab, #eb6f92 18%, #191724) !important;
+    --diff-addition-foreground: #56949f !important;
+    --diff-removal-foreground: #eb6f92 !important;
+    --diff-meta-foreground: #f6c177 !important;
+    --hljs-function: #9ccfd8 !important;
+    --hljs-keyword: #c4a7e7 !important;
+    --hljs-class: #f6c177 !important;
+    --hljs-string: #56949f !important;
+    --hljs-comment: #6e6a86 !important;
+    --hljs-number: #ebbcba !important;
+    --terminal-black: #403d52 !important;
+    --terminal-red: #eb6f92 !important;
+    --terminal-green: #56949f !important;
+    --terminal-yellow: #f6c177 !important;
+    --terminal-blue: #9ccfd8 !important;
+    --terminal-magenta: #c4a7e7 !important;
+    --terminal-cyan: #9ccfd8 !important;
+    --terminal-white: #908caa !important;
+    --terminal-bright-black: #6e6a86 !important;
+    --terminal-bright-red: #eb6f92 !important;
+    --terminal-bright-green: #56949f !important;
+    --terminal-bright-yellow: #f6c177 !important;
+    --terminal-bright-blue: #9ccfd8 !important;
+    --terminal-bright-magenta: #c4a7e7 !important;
+    --terminal-bright-cyan: #9ccfd8 !important;
+    --terminal-bright-white: #e0def4 !important;
+  }
+}

@@ -1,0 +1,30 @@
+# kanagawa wave — ported from sentinel/ui/src/index.css (.kanagawa)
+name = "kanagawa"
+mode = "dark"
+
+[colors]
+background = "#1f1f28"
+foreground = "#dcd7ba"
+primary = "#7e9cd8"
+secondary = "#957fb8"
+accent = "#7fb4ca"
+success = "#98bb6c"
+warning = "#e6c384"
+info = "#7fb4ca"
+destructive = "#ff5d62"
+
+[ui]
+muted_foreground = "#938a80"
+border = "#363646"
+cursor = "#dcd7ba"
+selection = "#2a2a37"
+
+[syntax]
+keyword = "#957fb8"
+string = "#98bb6c"
+number = "#d27e99"
+comment = "#727169"
+function = "#7e9cd8"
+variable = "#dcd7ba"
+type = "#7aa89f"
+operator = "#c0a36e"

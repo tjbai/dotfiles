@@ -13,9 +13,17 @@ reboot restores the shape (agents restart via `amp threads continue`). bells pro
 to ghostty tab indicators; `wu` with no args is the attention dashboard. `./install`
 brew-installs tmux and clones the two plugins if missing.
 
-amp: settings.json plus hand-written plugins from `~/.config/amp/plugins/`. plugins
-that amp auto-updates from ampcode.com (marked on their first line) are skipped —
-they restore themselves. `./install` curl-installs the amp cli if missing.
+amp: settings.json, custom themes (`~/.config/amp/themes/<name>/colors.toml`, ported
+from the sentinel palettes), and hand-written plugins from `~/.config/amp/plugins/`.
+plugins that amp auto-updates from ampcode.com (marked on their first line) are
+skipped — they restore themselves. `./install` curl-installs the amp cli if missing.
+
+ampcode.com has no theme setting, so `amp-web-themes/` themes it from firefox via
+stylus. `bun build.ts` emits one `.user.css` per sentinel palette plus
+`stylus-import.json`; stylus → manage → import styles loads all six (kanagawa on,
+rest off; flip in the popup). the site keys its palette off css vars on `:root`
+with `light-dark()`, so every override is `!important` to beat the built-in
+`data-amp-theme` variants.
 
 when the amp cli is authenticated, `./update` also mirrors local skills and plugins
 into the amp user repos (`ampcode.com/git/@<user>/-/skills` and `/plugins`), which

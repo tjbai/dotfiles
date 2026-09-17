@@ -1,0 +1,30 @@
+# rosé pine — ported from sentinel/ui/src/index.css (.rosepine)
+name = "rosepine"
+mode = "dark"
+
+[colors]
+background = "#191724"
+foreground = "#e0def4"
+primary = "#c4a7e7"
+secondary = "#ebbcba"
+accent = "#9ccfd8"
+success = "#56949f"
+warning = "#f6c177"
+info = "#9ccfd8"
+destructive = "#eb6f92"
+
+[ui]
+muted_foreground = "#908caa"
+border = "#403d52"
+cursor = "#e0def4"
+selection = "#26233a"
+
+[syntax]
+keyword = "#31748f"
+string = "#f6c177"
+number = "#ebbcba"
+comment = "#6e6a86"
+function = "#c4a7e7"
+variable = "#e0def4"
+type = "#9ccfd8"
+operator = "#908caa"
