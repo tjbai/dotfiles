@@ -136,6 +136,7 @@ alias ghpr="gh pr create --base"
 alias tsc="npx tsc --noEmit -p tsconfig.json"
 alias codexh="codex --model=gpt-5-codex -c model_reasoning_effort=\"high\""
 alias test="uvpy -m pytest"
+alias atc="amp thread continue"
 
 allnight() {
   if [[ -z "$1" ]]; then
@@ -168,3 +169,10 @@ path=("${(@)path:#/Users/bai/Library/Application Support/Coursier/bin}")
 
 # private, identity/work-specific config (not committed in plaintext)
 [[ -f ~/.zshrc.private ]] && source ~/.zshrc.private
+
+# bun completions
+[ -s "/Users/bai/.bun/_bun" ] && source "/Users/bai/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"

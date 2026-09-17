@@ -64,7 +64,7 @@ This mirrors a tight house style: few comments, short names, few functions, colo
 8. Tighten formatting.
    - Remove top-level narrative docstrings unless they are the API documentation surface.
    - Compact stdlib imports when local style allows it: `import os, re, base64, hashlib`.
-   - Do not leave two blank lines between every tiny helper by reflex. Dense helper clusters are easier to scan when they are short.
+   - One blank line between top-level definitions (functions, classes, constants), never two. PEP 8's two-line rule does not apply here; run the formatter with that check disabled if it fights you.
    - Use blank lines inside longer functions to separate real phases: read config, decrypt secrets, call external service, build return value.
    - One-line guard returns are fine when they reduce ceremony: `if not result.data: return None`.
    - Avoid extracting a phase just to create a heading. If the phase is local and linear, keep it local and add whitespace only where it helps.
