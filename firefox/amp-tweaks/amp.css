@@ -173,6 +173,31 @@ body,
   max-width: calc(var(--tj-column) + 3rem) !important;
 }
 
+/* ── sidebar: loud unread ──
+   amp marks an unread thread with a 6px `bg-terminal-bright-blue` badge pinned to
+   the executor icon (`[data-thread-row-unread-badge]`, always in the dom, toggled
+   opacity-0 → opacity-100) and bumps the title from font-normal to font-medium.
+   an older row variant uses a standalone dot with aria-label "Unread" — kept as a
+   fallback. no data-* on the row itself, so key off the badge with :has(). the row
+   is `.group/thread-row`; the selected row carries `bg-accent` and is left alone.
+   title takes the accent color and a bit more weight; the badge grows to 8px with
+   a sidebar-colored ring so it reads as a dot, not a smudge on the icon. */
+:root {
+  --tj-unread: var(--terminal-bright-blue);
+}
+.group\/thread-row:not(.bg-accent):has([data-thread-row-unread-badge].opacity-100) .text-base.font-medium,
+.group\/thread-row:not(.bg-accent):has([aria-label^="Unread"]) .text-base.font-medium {
+  color: var(--tj-unread) !important;
+  font-weight: 650 !important;
+}
+.group\/thread-row [data-thread-row-unread-badge].opacity-100,
+.group\/thread-row [aria-label^="Unread"].rounded-full {
+  width: 0.5rem !important;
+  height: 0.5rem !important;
+  background: var(--tj-unread) !important;
+  box-shadow: 0 0 0 2px var(--sidebar, var(--background)) !important;
+}
+
 /* ── code editor / diff views (codemirror). settings → appearance writes these; pin here. ──
 :root {
   --app-code-font-size: 0.78rem !important;

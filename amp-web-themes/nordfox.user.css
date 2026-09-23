@@ -5,9 +5,14 @@
 @description  Nordfox palette for ampcode.com, ported from sentinel.
 ==/UserStyle== */
 @-moz-document domain("ampcode.com") {
-  :root, [data-amp-content-theme] {
+  :root, [data-amp-content-theme], .app-shell {
     color-scheme: dark !important;
     --background: #2e3440 !important;
+    --amp-shell-light-background-color: #2e3440 !important;
+    --amp-shell-dark-background-color: #2e3440 !important;
+    --amp-surface-light-background-color: #2e3440 !important;
+    --amp-surface-dark-background-color: #2e3440 !important;
+    --app-surface-background: #2e3440 !important;
     --foreground: #cdcecf !important;
     --border: #434c5e !important;
     --muted: #3b4252 !important;

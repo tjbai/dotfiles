@@ -5,9 +5,14 @@
 @description  Everforest Dark palette for ampcode.com, ported from sentinel.
 ==/UserStyle== */
 @-moz-document domain("ampcode.com") {
-  :root, [data-amp-content-theme] {
+  :root, [data-amp-content-theme], .app-shell {
     color-scheme: dark !important;
     --background: #2d353b !important;
+    --amp-shell-light-background-color: #2d353b !important;
+    --amp-shell-dark-background-color: #2d353b !important;
+    --amp-surface-light-background-color: #2d353b !important;
+    --amp-surface-dark-background-color: #2d353b !important;
+    --app-surface-background: #2d353b !important;
     --foreground: #d3c6aa !important;
     --border: #475258 !important;
     --muted: #3d484d !important;

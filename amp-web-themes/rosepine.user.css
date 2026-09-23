@@ -5,9 +5,14 @@
 @description  Rosé Pine palette for ampcode.com, ported from sentinel.
 ==/UserStyle== */
 @-moz-document domain("ampcode.com") {
-  :root, [data-amp-content-theme] {
+  :root, [data-amp-content-theme], .app-shell {
     color-scheme: dark !important;
     --background: #191724 !important;
+    --amp-shell-light-background-color: #191724 !important;
+    --amp-shell-dark-background-color: #191724 !important;
+    --amp-surface-light-background-color: #191724 !important;
+    --amp-surface-dark-background-color: #191724 !important;
+    --app-surface-background: #191724 !important;
     --foreground: #e0def4 !important;
     --border: #403d52 !important;
     --muted: #26233a !important;

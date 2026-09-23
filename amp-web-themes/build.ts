@@ -75,6 +75,14 @@ function css(name: string, p: Palette): string {
 	// to win on specificity regardless of what the user has picked in-app.
 	const vars: [string, string][] = [
 		["--background", `${p.bg}`],
+		// inline <head> style paints html/body and the main surface from these,
+		// not from --background. both light and dark so color-scheme can't leak.
+		["--amp-shell-light-background-color", `${p.bg}`],
+		["--amp-shell-dark-background-color", `${p.bg}`],
+		["--amp-surface-light-background-color", `${p.bg}`],
+		["--amp-surface-dark-background-color", `${p.bg}`],
+		// declared on .app-shell itself, so the selector below includes .app-shell.
+		["--app-surface-background", `${p.bg}`],
 		["--foreground", `${p.fg}`],
 		["--border", `${p.bg3}`],
 		["--muted", `${p.bg2}`],
@@ -143,7 +151,7 @@ function css(name: string, p: Palette): string {
 @description  ${p.label} palette for ampcode.com, ported from sentinel.
 ==/UserStyle== */
 @-moz-document domain("ampcode.com") {
-  :root, [data-amp-content-theme] {
+  :root, [data-amp-content-theme], .app-shell {
     color-scheme: dark !important;
 ${decls}
   }

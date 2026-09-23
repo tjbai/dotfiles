@@ -110,6 +110,11 @@ gco() {
       cd -- "$worktree"
       return
     fi
+    # no local branch: fetch it from origin so checkout can create a tracking branch
+    if ! git show-ref --verify --quiet "refs/heads/$target" &&
+       ! git rev-parse --verify --quiet "$target^{commit}" >/dev/null; then
+      git fetch origin "refs/heads/${target}:refs/remotes/origin/${target}" 2>/dev/null
+    fi
     git checkout "$target"
     return
   fi
