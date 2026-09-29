@@ -13,6 +13,12 @@ reboot restores the shape (agents restart via `amp threads continue`). bells pro
 to ghostty tab indicators; `wu` with no args is the attention dashboard. `./install`
 brew-installs tmux and clones the two plugins if missing.
 
+asciiquarium: `allnight fish` (zshrc) runs it under caffeinate. brew's build paints
+opaque black behind every cell, which kills ghostty's transparency, so
+`patches/asciiquarium-transparent-bg.patch` swaps the bundled Term::Animation over
+to the terminal's default background. `./install` brew-installs and applies it; a
+`brew upgrade` drops it, `./update` says so.
+
 amp: settings.json, custom themes (`~/.config/amp/themes/<name>/colors.toml`, ported
 from the sentinel palettes), and hand-written plugins from `~/.config/amp/plugins/`.
 plugins that amp auto-updates from ampcode.com (marked on their first line) are
@@ -114,6 +120,7 @@ skills/       skills — <name>/ plaintext if public, <name>.enc if not
 amp/          server-side amp settings: sync script, guidance + puck .md, settings.json, secret names
 launchd/      lj (the tool) + jobs/<name>/{job,run,check}
 firefox/      amp-tweaks/ — css-only extension for ampcode.com, loaded via about:debugging
+patches/      asciiquarium transparent-background patch, applied by install
 vault/        everything encrypted, nothing home-mirrored:
   private/    encrypted private files
   firefox/    encrypted bookmarks + search shortcuts

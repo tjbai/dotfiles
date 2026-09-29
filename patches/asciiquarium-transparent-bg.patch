@@ -1,0 +1,20 @@
+--- a/Term/Animation.pm
++++ b/Term/Animation.pm
+@@ -229,7 +229,8 @@
+ 
+ 	my $cid = 1;
+ 
+-	my $bg = eval "Curses::COLOR_$self->{BG}";
++	# -1 = terminal default background (transparent-friendly)
++	my $bg = $self->{BG} eq "BLACK" ? -1 : eval "Curses::COLOR_$self->{BG}";
+ 
+ 	for my $f ('w', 'r', 'g', 'b', 'c', 'm', 'y', 'k') {
+ 		my $c = uc(color_name($f));
+@@ -305,6 +306,7 @@
+ 		if($enable != $self->{COLOR_ENABLED}) {
+ 			if($enable) {
+ 				start_color();
++				use_default_colors();
+ 				unless(defined($self->{BG})) { $self->{BG} = 'BLACK'; }
+ 				$self->_set_colors();
+ 				$self->{WIN}->bkgdset($self->{COLORS}{'w'});

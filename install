@@ -39,6 +39,19 @@ mkdir -p ~/.tmux/plugins
 [[ -d ~/.tmux/plugins/tmux-resurrect ]] || git clone --depth 1 https://github.com/tmux-plugins/tmux-resurrect ~/.tmux/plugins/tmux-resurrect
 [[ -d ~/.tmux/plugins/tmux-continuum ]] || git clone --depth 1 https://github.com/tmux-plugins/tmux-continuum ~/.tmux/plugins/tmux-continuum
 
+# asciiquarium (`allnight fish`): brew-install, then patch its bundled
+# Term::Animation to draw on the terminal's default background instead of
+# opaque black, so it composes over a transparent ghostty. brew upgrade
+# replaces the Cellar and drops the patch; re-running install re-applies it.
+if command -v brew >/dev/null; then
+  brew list asciiquarium >/dev/null 2>&1 || brew install asciiquarium
+  anim="$(brew --prefix asciiquarium)/libexec/lib/perl5/Term/Animation.pm"
+  if [[ -f "$anim" ]] && ! grep -q use_default_colors "$anim"; then
+    patch -s -b "$anim" "$ROOT/patches/asciiquarium-transparent-bg.patch"
+    echo "asciiquarium: patched for transparent background"
+  fi
+fi
+
 password
 
 # skills: plaintext dirs copied, encrypted ones decrypted

@@ -98,6 +98,13 @@ amppid=$!
 # launchd: report only. jobs are repo-defined; `lj apply` is install's job.
 "$ROOT/launchd/lj" doctor || echo "launchd: run 'lj doctor' for details" >&2
 
+# asciiquarium: report only. the transparency patch is repo-defined and
+# applied by install; a brew upgrade silently drops it.
+if anim="$(brew --prefix asciiquarium 2>/dev/null)/libexec/lib/perl5/Term/Animation.pm" \
+   && [[ -f "$anim" ]] && ! grep -q use_default_colors "$anim"; then
+  echo "asciiquarium: transparency patch missing — run ./install" >&2
+fi
+
 password confirm
 
 # skills: names always public. content public only if listed in public.txt,
