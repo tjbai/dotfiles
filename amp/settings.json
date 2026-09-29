@@ -2,6 +2,7 @@
   "activity_calendar_enabled": true,
   "bonus_email_opt_in": null,
   "dial_modes": null,
+  "dictation_enabled": true,
   "experimental_feature.desktop-fun-games": false,
   "experimental_feature.exhausted-connection-switch": false,
   "experimental_feature.mcp-server": false,
@@ -11,13 +12,22 @@
   "experimental_feature.thread-recap": true,
   "keyboard_shortcuts": {
     "show-thread-chat": "ctrl+i",
-    "sidebar-switch-to-next-thread": ["ctrl+]", "mod+shift+]"],
-    "sidebar-switch-to-previous-thread": ["ctrl+[", "mod+shift+["],
+    "sidebar-switch-to-next-thread": [
+      "ctrl+]",
+      "mod+shift+]"
+    ],
+    "sidebar-switch-to-previous-thread": [
+      "ctrl+[",
+      "mod+shift+["
+    ],
     "toggle-thread-right-panel": "shift+mod+b"
   },
+  "mention_email_opt_in": true,
+  "mention_slack_opt_in": true,
   "message_send_behavior": "steer",
   "project_defaults.changes_workflow": "merge-to-main",
   "project_defaults.custom_ship_prompt": "",
   "project_defaults.orb_commit_author": "amp",
+  "sidebar_thread_layout": "multi-project",
   "thread_color_mode": "agent-mode"
 }
