@@ -32,12 +32,12 @@ from the sentinel palettes), and hand-written plugins from `~/.config/amp/plugin
 plugins that amp auto-updates from ampcode.com (marked on their first line) are
 skipped — they restore themselves. `./install` curl-installs the amp cli if missing.
 
-ampcode.com has no theme setting, so `amp-web-themes/` themes it from firefox via
-stylus. `bun build.ts` emits one `.user.css` per sentinel palette plus
-`stylus-import.json`; stylus → manage → import styles loads all six (kanagawa on,
-rest off; flip in the popup). the site keys its palette off css vars on `:root`
-with `light-dark()`, so every override is `!important` to beat the built-in
-`data-amp-theme` variants.
+ampcode.com has no theme setting, so `firefox/stylus/ampcode/` themes it from firefox
+via stylus (one dir per site under `firefox/stylus/`). `bun build.ts` emits one
+`.user.css` per sentinel palette plus `stylus-import.json`; stylus → manage → import
+styles loads all six (kanagawa on, rest off; flip in the popup). the site keys its
+palette off css vars on `:root` with `light-dark()`, so every override is `!important`
+to beat the built-in `data-amp-theme` variants.
 
 when the amp cli is authenticated, `./update` also mirrors local skills and plugins
 into the amp user repos (`ampcode.com/git/@<user>/-/skills` and `/plugins`), which
@@ -128,6 +128,7 @@ skills/       skills — <name>/ plaintext if public, <name>.enc if not
 amp/          server-side amp settings: sync script, guidance + puck .md, settings.json, secret names
 launchd/      lj (the tool) + jobs/<name>/{job,run,check}
 firefox/      amp-tweaks/ — css-only extension for ampcode.com, loaded via about:debugging
+  stylus/     userstyles, one dir per site; ampcode/ has build.ts + the six palettes
 bin/          kanagawa — the wave screensaver behind `allnight wave`
 patches/      asciiquarium transparent-background patch, applied by install
 vault/        everything encrypted, nothing home-mirrored:

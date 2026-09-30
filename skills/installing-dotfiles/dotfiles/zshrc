@@ -138,16 +138,26 @@ alias ts="date +%Y%m%d%H%M%S"
 alias lsmd="ls -d *.md 2>/dev/null"
 alias npm="pnpm"
 alias ghpr="gh pr create --base"
+alias ghm="gh pr merge --merge"
 alias tsc="npx tsc --noEmit -p tsconfig.json"
 alias codexh="codex --model=gpt-5-codex -c model_reasoning_effort=\"high\""
 alias test="uvpy -m pytest"
 alias atc="amp thread continue"
 
-allnight() {
-  if [[ -z "$1" ]]; then
-    caffeinate -dis
+allnight() { # allnight [hours] [fish|wave] — stay awake; fish = asciiquarium, wave = kanagawa
+  local a hours scene
+  for a in "$@"; do case "$a" in fish|wave) scene=$a ;; *) hours=$a ;; esac; done
+  local -a caf=(caffeinate -dis)
+  [[ -n "$hours" ]] && caf+=(-t $(printf '%.0f' $(( hours * 3600 ))))
+  if [[ -n "$scene" ]]; then
+    "${caf[@]}" & local cafpid=$!
+    case "$scene" in
+      fish) asciiquarium ;;
+      wave) ~/dev/dotfiles/bin/kanagawa ${hours:+--hours $hours} ;;
+    esac
+    kill $cafpid 2>/dev/null
   else
-    caffeinate -dis -t $(printf '%.0f' $(( $1 * 3600 )))
+    "${caf[@]}"
   fi
 }
 lsp() { lsof -i :$1 }
