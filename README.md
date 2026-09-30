@@ -13,11 +13,19 @@ reboot restores the shape (agents restart via `amp threads continue`). bells pro
 to ghostty tab indicators; `wu` with no args is the attention dashboard. `./install`
 brew-installs tmux and clones the two plugins if missing.
 
-asciiquarium: `allnight fish` (zshrc) runs it under caffeinate. brew's build paints
-opaque black behind every cell, which kills ghostty's transparency, so
-`patches/asciiquarium-transparent-bg.patch` swaps the bundled Term::Animation over
-to the terminal's default background. `./install` brew-installs and applies it; a
-`brew upgrade` drops it, `./update` says so.
+allnight: `allnight [hours] [fish|wave]` (zshrc) runs caffeinate, optionally with
+a screensaver. `fish` is asciiquarium: brew's build paints opaque black behind every
+cell, which kills ghostty's transparency, so `patches/asciiquarium-transparent-bg.patch`
+swaps the bundled Term::Animation over to the terminal's default background.
+`./install` brew-installs and applies it; a `brew upgrade` drops it, `./update` says
+so. `wave` is `bin/kanagawa`, the great wave in braille: a height-field swell with two
+rolling great waves whose crests curl into hokusai claws, fuji and a moon behind them,
+24-bit color on the default background. colors come from the sentinel palettes in
+`~/.config/amp/themes` and drift kanagawa → nordfox → catppuccin → rosepine →
+everforest → gruvbox, one every 20 min (`--cycle`); the moon crosses the sky over
+`--hours`. stdlib python. keys: `q`/esc quit, `n`/`→` next palette, `p`/`←` previous,
+`1`–`6` pick one, space holds the drift, `h` hides the clock. `--theme gruv` starts on
+a palette, `--hold` stays there, `--bench` times a frame headless.
 
 amp: settings.json, custom themes (`~/.config/amp/themes/<name>/colors.toml`, ported
 from the sentinel palettes), and hand-written plugins from `~/.config/amp/plugins/`.
@@ -120,6 +128,7 @@ skills/       skills — <name>/ plaintext if public, <name>.enc if not
 amp/          server-side amp settings: sync script, guidance + puck .md, settings.json, secret names
 launchd/      lj (the tool) + jobs/<name>/{job,run,check}
 firefox/      amp-tweaks/ — css-only extension for ampcode.com, loaded via about:debugging
+bin/          kanagawa — the wave screensaver behind `allnight wave`
 patches/      asciiquarium transparent-background patch, applied by install
 vault/        everything encrypted, nothing home-mirrored:
   private/    encrypted private files

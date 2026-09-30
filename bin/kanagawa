@@ -1,0 +1,1106 @@
+#!/usr/bin/env python3
+"""kanagawa — the great wave off kanagawa, in braille, for `allnight wave`.
+
+hokusai's wave, but alive: swells drift in from the left, steepen, curl over
+into the clawed cream lip of the print with fuji small and low beyond, then
+crash into the trough and wash out while the next one is already rising. the
+oshiokuri boats row left into the weather, ride up the backs, tip over the lips,
+and capsize when a face gets too steep or a lip comes down on them. each wave
+and boat rolls its own size, speed, and timing, so no two nights look the same.
+
+the water is a filled 2-d silhouette (so the lip really overhangs), shaded in
+solid bands that follow the bend of the wave. drawn as braille dots (2x4 per
+cell) in 24-bit color on the terminal's default background, so ghostty's
+transparency shows through. colors come from the sentinel palettes in
+~/.config/amp/themes and drift kanagawa -> nordfox -> catppuccin -> rosepine ->
+everforest -> gruvbox (cold night to warm dawn), one palette per --cycle
+minutes. the moon rises and sets over fuji across --hours.
+
+keys: q/esc quit · n/→/] next palette · p/←/[ previous · 1-6 pick a palette
+      · space hold/release the drift · h toggle hud
+--theme NAME starts on a palette, --hold keeps it there.
+
+stdlib only (python >= 3.11 for tomllib; older pythons fall back to the
+built-in kanagawa palette).
+"""
+
+import argparse
+import math
+import os
+import random
+import select
+import signal
+import struct
+import sys
+import time
+from pathlib import Path
+
+try:
+    import tomllib
+except ImportError:  # python < 3.11
+    tomllib = None
+
+THEMES = Path.home() / ".config/amp/themes"
+ORDER = ["kanagawa", "nordfox", "catppuccin", "rosepine", "everforest", "gruvbox"]
+ROLES = ("foreground", "primary", "accent", "warning", "muted_foreground", "border", "comment")
+KANAGAWA = {
+    "foreground": "#dcd7ba", "primary": "#7e9cd8", "accent": "#7fb4ca", "warning": "#e6c384",
+    "muted_foreground": "#938a80", "border": "#363646", "comment": "#727169",
+}
+
+# braille: dot (col c, row r) -> codepoint bit
+BIT = ((0x01, 0x02, 0x04, 0x40), (0x08, 0x10, 0x20, 0x80))
+
+# materials in the pixel buffer. one byte per dot; the compositor picks a cell color.
+EMPTY, DEEP, MID, PALE, CREAM, ROCK, SNOW, STAR, MOON, SPRAY, HULL, CREW = range(12)
+NMAT = 12
+WATER = (DEEP, MID, PALE)
+
+# design canvas: 320 x 180 dots (a 160x45 terminal). everything is authored here
+# and stretched to the real dot canvas. sea level is y = 135.
+DW, DH = 320.0, 180.0
+SEA = 135.0
+
+# a wave is nine cubic beziers (y down), clockwise on screen, closed along sea
+# level. the same nine curves are authored at four moments of its life; a live
+# wave blends between them. "curl" is the print.
+NAMES = ("toe", "back", "shoulder", "crest", "tip", "under", "wall", "face", "run")
+KEY = {
+    "hump": {
+        "toe": ((-60, 135), (-40, 135), (-25, 133), (-12, 131)),
+        "back": ((-12, 131), (10, 128), (30, 122), (45, 116)),
+        "shoulder": ((45, 116), (60, 111), (75, 108), (90, 107)),
+        "crest": ((90, 107), (100, 106), (110, 106), (118, 107)),
+        "tip": ((118, 107), (122, 108), (124, 109), (124, 110)),
+        "under": ((124, 110), (123, 110), (121, 109.5), (118, 109)),
+        "wall": ((118, 109), (115, 109.5), (113, 110.5), (112, 112)),
+        "face": ((112, 112), (118, 120), (150, 131), (198, 135)),
+        "run": ((198, 135), (215, 135), (228, 135), (240, 135)),
+    },
+    "curl": {
+        "toe": ((-60, 135), (-40, 134), (-25, 130), (-12, 126)),
+        "back": ((-12, 126), (14, 123), (24, 90), (30, 70)),
+        "shoulder": ((30, 70), (38, 32), (61, 22), (85, 25)),
+        "crest": ((85, 25), (121, 16), (159, 26), (179, 46)),
+        "tip": ((179, 46), (191, 57), (192, 67), (184, 78)),
+        "under": ((184, 78), (180, 64), (169, 50), (153, 47)),
+        "wall": ((153, 47), (132, 39), (106, 54), (103, 78)),
+        "face": ((103, 78), (100, 112), (140, 136), (198, 135)),
+        "run": ((198, 135), (215, 135), (228, 135), (240, 135)),
+    },
+    "crash": {
+        "toe": ((-60, 135), (-40, 134), (-25, 131), (-12, 128)),
+        "back": ((-12, 128), (14, 125), (30, 114), (50, 102)),
+        "shoulder": ((50, 102), (70, 90), (95, 82), (120, 80)),
+        "crest": ((120, 80), (150, 78), (178, 86), (196, 100)),
+        "tip": ((196, 100), (208, 110), (212, 122), (206, 133)),
+        "under": ((206, 133), (202, 126), (196, 118), (186, 112)),
+        "wall": ((186, 112), (176, 108), (164, 110), (158, 118)),
+        "face": ((158, 118), (160, 128), (178, 135), (198, 135)),
+        "run": ((198, 135), (215, 135), (228, 135), (240, 135)),
+    },
+    "flat": {
+        "toe": ((-60, 135), (-40, 135), (-25, 135), (-12, 135)),
+        "back": ((-12, 135), (10, 135), (30, 134.5), (50, 134)),
+        "shoulder": ((50, 134), (70, 134), (95, 133.5), (120, 133.5)),
+        "crest": ((120, 133.5), (150, 133.5), (180, 134), (200, 134.5)),
+        "tip": ((200, 134.5), (205, 134.7), (210, 134.9), (212, 135)),
+        "under": ((212, 135), (209, 135), (205, 135), (200, 135)),
+        "wall": ((200, 135), (197, 135), (194, 135), (192, 135)),
+        "face": ((192, 135), (194, 135), (196, 135), (198, 135)),
+        "run": ((198, 135), (215, 135), (228, 135), (240, 135)),
+    },
+}
+SAMPLES = 20
+
+
+def hex_rgb(s):
+    s = s.lstrip("#")
+    return (int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16))
+
+
+def mix(a, b, u):
+    return tuple(int(round(a[i] + (b[i] - a[i]) * u)) for i in range(3))
+
+
+def esc(c):
+    return f"\x1b[38;2;{c[0]};{c[1]};{c[2]}m"
+
+
+def smoothstep(u):
+    u = min(1.0, max(0.0, u))
+    return u * u * (3 - 2 * u)
+
+
+def load_palettes():
+    pals = []
+    for name in ORDER:
+        f = THEMES / name / "colors.toml"
+        if tomllib is None or not f.is_file():
+            continue
+        try:
+            doc = tomllib.loads(f.read_text())
+        except (OSError, tomllib.TOMLDecodeError):
+            continue
+        flat = {**doc.get("colors", {}), **doc.get("ui", {})}
+        flat["comment"] = doc.get("syntax", {}).get("comment", flat.get("muted_foreground", ""))
+        if all(r in flat for r in ROLES):
+            pals.append((name, {r: hex_rgb(flat[r]) for r in ROLES}))
+    return pals or [("kanagawa", {r: hex_rgb(v) for r, v in KANAGAWA.items()})]
+
+
+def material_colors(pal):
+    """palette roles -> one color per material, as escape strings, indexed by material."""
+    primary, border, fg, warn = pal["primary"], pal["border"], pal["foreground"], pal["warning"]
+    c = [None] * NMAT
+    c[DEEP] = esc(mix(primary, border, 0.80))
+    c[MID] = esc(mix(primary, border, 0.22))
+    c[PALE] = esc(pal["accent"])
+    c[CREAM] = c[SPRAY] = esc(fg)
+    c[ROCK] = esc(mix(border, pal["muted_foreground"], 0.40))
+    c[SNOW] = esc(mix(pal["muted_foreground"], fg, 0.30))
+    c[STAR] = esc(pal["comment"])
+    c[MOON] = esc(warn)
+    c[HULL] = esc(mix(border, warn, 0.45))
+    c[CREW] = esc(mix(fg, warn, 0.55))
+    return c
+
+
+# --- geometry helpers ---------------------------------------------------------------
+
+
+def cubic(p, n=SAMPLES):
+    (x0, y0), (x1, y1), (x2, y2), (x3, y3) = p
+    out = []
+    for i in range(n + 1):
+        u = i / n
+        v = 1 - u
+        a, b, c, d = v * v * v, 3 * v * v * u, 3 * v * u * u, u * u * u
+        out.append((a * x0 + b * x1 + c * x2 + d * x3, a * y0 + b * y1 + c * y2 + d * y3))
+    return out
+
+
+def blend(A, B, u):
+    """lerp two keyframes (dicts of 4 control points per curve)."""
+    return {n: tuple((ax + (bx - ax) * u, ay + (by - ay) * u) for (ax, ay), (bx, by) in zip(A[n], B[n])) for n in NAMES}
+
+
+def normals(pts):
+    """unit left-normals (-Ty, Tx) of a polyline, by central difference."""
+    n = len(pts)
+    out = []
+    for i in range(n):
+        x0, y0 = pts[max(0, i - 1)]
+        x1, y1 = pts[min(n - 1, i + 1)]
+        tx, ty = x1 - x0, y1 - y0
+        l = math.hypot(tx, ty) or 1.0
+        out.append((-ty / l, tx / l))
+    return out
+
+
+def ribbon(pts, widths):
+    """polygon between a polyline and its offset along the left normal."""
+    ns = normals(pts)
+    inner = [(pts[i][0] + widths[i] * ns[i][0], pts[i][1] + widths[i] * ns[i][1]) for i in range(len(pts))]
+    return pts + inner[::-1]
+
+
+def stroke(spine, widths):
+    """tapered stroke: polygon around a polyline with per-point half-widths."""
+    ns = normals(spine)
+    left = [(spine[i][0] + widths[i] * ns[i][0], spine[i][1] + widths[i] * ns[i][1]) for i in range(len(spine))]
+    right = [(spine[i][0] - widths[i] * ns[i][0], spine[i][1] - widths[i] * ns[i][1]) for i in range(len(spine))]
+    return left + right[::-1]
+
+
+def arclen(pts):
+    acc = [0.0]
+    for i in range(1, len(pts)):
+        acc.append(acc[-1] + math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]))
+    return acc
+
+
+def at_length(pts, acc, s):
+    """point and unit tangent on a polyline at arc length s."""
+    s = min(max(s, 0.0), acc[-1])
+    lo, hi = 0, len(acc) - 1
+    while hi - lo > 1:
+        mid = (lo + hi) // 2
+        if acc[mid] <= s:
+            lo = mid
+        else:
+            hi = mid
+    (x0, y0), (x1, y1) = pts[lo], pts[hi]
+    seg = acc[hi] - acc[lo] or 1.0
+    u = (s - acc[lo]) / seg
+    l = math.hypot(x1 - x0, y1 - y0) or 1.0
+    return (x0 + (x1 - x0) * u, y0 + (y1 - y0) * u), ((x1 - x0) / l, (y1 - y0) / l)
+
+
+def deform(pts, t, phase, amp):
+    """the crest breathes: rises and leans forward; the water at sea level stays put."""
+    a = math.tau * t / 13 + phase
+    b = math.tau * t / 23 + phase
+    dy = -(1.8 * math.sin(a) + 0.5 * math.sin(b)) * amp
+    dx = 1.5 * math.sin(a - 0.4) * amp
+    out = []
+    for x, y in pts:
+        w = smoothstep((130 - y) / 100)
+        out.append((x + dx * w, y + dy * w))
+    return out
+
+
+def crossings(poly, x):
+    """sorted y values where the vertical line at x crosses a closed polygon."""
+    ys = []
+    n = len(poly)
+    for i in range(n):
+        x0, y0 = poly[i]
+        x1, y1 = poly[(i + 1) % n]
+        if (x0 <= x < x1) or (x1 <= x < x0):
+            ys.append(y0 + (x - x0) * (y1 - y0) / (x1 - x0))
+    ys.sort()
+    return ys
+
+
+# --- rasterizer: material bytes into a flat PW x PH buffer --------------------------------
+
+
+class Raster:
+    def __init__(self, PW, PH):
+        self.PW, self.PH = PW, PH
+        self.rows = [bytes([m]) * PW for m in range(NMAT)]
+
+    def poly(self, buf, pts, mat, ymax=None):
+        """even-odd scanline fill of a closed polygon (canvas coords), optionally clipped below ymax."""
+        PW, PH = self.PW, self.PH
+        if ymax is not None:
+            PH = min(PH, max(0, int(ymax)))
+        rows = {}
+        n = len(pts)
+        for i in range(n):
+            x0, y0 = pts[i]
+            x1, y1 = pts[(i + 1) % n]
+            if y0 == y1:
+                continue
+            if y0 > y1:
+                x0, y0, x1, y1 = x1, y1, x0, y0
+            ya = max(0, math.ceil(y0 - 0.5))
+            yb = min(PH - 1, math.ceil(y1 - 0.5) - 1)
+            if ya > yb:
+                continue
+            slope = (x1 - x0) / (y1 - y0)
+            for y in range(ya, yb + 1):
+                rows.setdefault(y, []).append(x0 + (y + 0.5 - y0) * slope)
+        fill = self.rows[mat]
+        for y, xs in rows.items():
+            xs.sort()
+            base = y * PW
+            for i in range(0, len(xs) - 1, 2):
+                a = max(0, int(xs[i] + 0.5))
+                b = min(PW, int(xs[i + 1] + 0.5))
+                if b > a:
+                    buf[base + a:base + b] = fill[:b - a]
+
+    def ellipse(self, buf, cx, cy, rx, ry, mat):
+        PW, PH = self.PW, self.PH
+        fill = self.rows[mat]
+        for y in range(max(0, int(cy - ry)), min(PH, int(cy + ry) + 2)):
+            v = (y + 0.5 - cy) / ry
+            if abs(v) >= 1:
+                continue
+            half = rx * math.sqrt(1 - v * v)
+            a = max(0, int(cx - half + 0.5))
+            b = min(PW, int(cx + half + 0.5))
+            if b > a:
+                buf[y * PW + a:y * PW + b] = fill[:b - a]
+
+
+# --- the wave ----------------------------------------------------------------------------
+
+
+class Wave:
+    """one breaking wave, born at `born`, travelling right through its life.
+
+    authored in local design space (sea level y=135); placed on screen with
+    `scale` about sea level and translated by x(t). the foreground echo waves are
+    just small fast instances."""
+
+    def __init__(self, scene, born, scale, speed, x_target, hold, fizzle, n_claws, claw_scale, seed):
+        rng = random.Random(seed)
+        self.scene, self.born, self.s, self.v = scene, born, scale, speed
+        self.oy = SEA * (1 - scale)
+        self.fizzle = fizzle
+        self.T = {"swell": rng.uniform(6, 9), "rise": rng.uniform(7, 10), "hold": hold,
+                  "crash": rng.uniform(4, 6) if fizzle else rng.uniform(2.6, 3.6),
+                  "wash": rng.uniform(4, 6) if fizzle else rng.uniform(7, 11)}
+        self.total = sum(self.T.values())
+        self.dmax = rng.uniform(0.5, 0.7) if fizzle else 1.0
+        self.x0 = x_target - speed * (self.T["swell"] + self.T["rise"] + hold / 2)
+        self.phase = rng.uniform(0, math.tau)
+        self.n_claws, self.cs = n_claws, claw_scale
+        self.var = [rng.uniform(-0.1, 0.1) for _ in range(n_claws)]
+        self.flex_period = [rng.uniform(4.5, 7.5) for _ in range(n_claws)]
+        self.flex_phase = [rng.uniform(0, math.tau) for _ in range(n_claws)]
+        for j in range(1, n_claws):  # neighbours partly share phase
+            self.flex_phase[j] = 0.6 * self.flex_phase[j - 1] + 0.4 * self.flex_phase[j]
+        self.stage, self.outline, self.tip = None, None, None
+
+    def shape(self, tau):
+        """(stage, d, c, w, control points) at age tau, or None when the wave is spent."""
+        T = self.T
+        if tau < T["swell"]:
+            d = 0.3 * smoothstep(tau / T["swell"])
+            return "swell", d, 0.0, 0.0, blend(KEY["hump"], KEY["curl"], d)
+        tau -= T["swell"]
+        if tau < T["rise"]:
+            d = 0.3 + (self.dmax - 0.3) * smoothstep(tau / T["rise"])
+            return "rise", d, 0.0, 0.0, blend(KEY["hump"], KEY["curl"], d)
+        tau -= T["rise"]
+        peak = blend(KEY["hump"], KEY["curl"], self.dmax)
+        if tau < T["hold"]:
+            return "hold", self.dmax, 0.0, 0.0, peak
+        tau -= T["hold"]
+        low = blend(KEY["hump"], KEY["curl"], 0.15)
+        if tau < T["crash"]:
+            u = tau / T["crash"]
+            if self.fizzle:
+                return "subside", self.dmax * (1 - 0.75 * smoothstep(u)), 0.0, 0.0, blend(peak, low, smoothstep(u))
+            c = u * u  # the lip accelerates as it falls
+            return "crash", 1.0, c, 0.0, blend(KEY["curl"], KEY["crash"], c)
+        tau -= T["crash"]
+        if tau < T["wash"]:
+            w = smoothstep(tau / T["wash"])
+            return "wash", 0.0, 1.0, w, blend(low if self.fizzle else KEY["crash"], KEY["flat"], w)
+        return None
+
+    def draw(self, buf, t):
+        """fills the wave into buf. returns spray sources in canvas coords:
+        (lip points, claw tips, burst point or None)."""
+        st = self.shape(t - self.born)
+        if st is None:
+            self.stage = None
+            return [], [], None
+        stage, d, c, w, P = st
+        self.stage = stage
+        R = self.scene.raster
+        kx, ky, s, oy = self.scene.kx, self.scene.ky, self.s, self.oy
+        X = self.x0 + self.v * (t - self.born)
+        amp = d if stage in ("swell", "rise", "hold") else 0.3
+
+        sea_y = self.scene.sea_y
+
+        def place(pts):
+            """local -> screen design coords; anything near sea level settles onto the ripple."""
+            out = []
+            for x, y in pts:
+                sx, sy = (X + x) * s, oy + s * y
+                sy += smoothstep((sy - (SEA - 10)) / 10) * (sea_y(sx, t) - SEA)
+                out.append((sx, sy))
+            return out
+
+        def canv(pts):
+            return [(x * kx, y * ky) for x, y in place(pts)]
+
+        S = {n: cubic(deform(P[n], t, self.phase, amp)) for n in NAMES}
+
+        # silhouette, closed a little below the surface so no sky shows between it and the sea
+        outline = []
+        for n in NAMES:
+            outline += S[n] if n == "toe" else S[n][1:]
+        screen = place(outline)
+        self.tip = screen[len(S["toe"]) + 4 * SAMPLES - 1]
+        screen += [(screen[-1][0], SEA + 8), (screen[0][0], SEA + 8)]
+        self.outline = screen
+        R.poly(buf, [(x * kx, y * ky) for x, y in screen], MID)
+
+        fade = 1 - w
+        # dark ribbon down the concave wall and face, broadening into the trough
+        dark = S["wall"][7:] + S["face"][1:]
+        n = len(dark)
+        k = (0.35 + 0.65 * d) * (1 - 0.7 * w) if stage != "crash" else 1 - 0.6 * c
+        widths = [k * (8 + 14 * smoothstep(i / (n * 0.7))) * (1 - 0.6 * smoothstep((i - n * 0.75) / (n * 0.25)))
+                  for i in range(n)]
+        R.poly(buf, canv(ribbon(dark, widths)), DEEP, ymax=(SEA + 4) * ky)
+
+        # dark leading edge up the back
+        back = S["back"][2:] + S["shoulder"][1:7]
+        n = len(back)
+        k = (0.3 + 0.7 * d) * fade
+        R.poly(buf, canv(ribbon(back, [k * 11 * math.sin(math.pi * (0.1 + 0.9 * i / (n - 1))) for i in range(n)])), DEEP)
+
+        # pale highlight along the rising shoulder into the crest
+        k = d * fade
+        if k > 0.1:
+            pale = S["shoulder"][3:] + S["crest"][1:13]
+            n = len(pale)
+            R.poly(buf, canv(ribbon(pale, [k * 16 * math.sin(math.pi * (0.15 + 0.85 * i / (n - 1))) for i in range(n)])), PALE)
+
+        # foam on the lip: appears as the crest steepens, whitens as it curls,
+        # rides the lip down in the crash, then greys out in the wash
+        if stage in ("swell", "rise", "hold", "subside"):
+            foam = None if d < 0.45 else PALE if d < 0.65 else CREAM
+        elif stage == "crash":
+            foam = CREAM
+        else:
+            foam = CREAM if w < 0.45 else PALE if w < 0.8 else None
+        if foam is not None:
+            apron = S["shoulder"][9:] + S["crest"][1:8]
+            R.poly(buf, canv(ribbon(apron, [7.0 * (d if stage != "crash" else 1) * fade] * len(apron))), foam)
+            # the cap's inner edge is ragged, not a straight cliff back to the crest
+            (wx, wy), (cx, cy) = S["wall"][10], S["crest"][6]
+            jag = [(wx + (cx - wx) * v + dx * d, wy + (cy - wy) * v) for v, dx in ((0.25, -6), (0.5, 3), (0.75, -5))]
+            cap = S["crest"][6:] + S["tip"][1:] + S["under"][1:] + S["wall"][1:11] + jag
+            R.poly(buf, canv(cap), foam)
+
+        # thin foam streaks down the dark face and up the back, only on a standing curl
+        if d > 0.75 and stage != "crash":
+            for name, u0, L, w0, bend in (("face", 0.04, 30, 1.1, 0.2), ("face", 0.28, 24, 0.9, 0.2),
+                                          ("face", 0.52, 17, 0.8, 0.15), ("back", 0.2, 34, 0.9, 0.1),
+                                          ("back", 0.55, 26, 0.8, 0.08)):
+                i0 = int(u0 * SAMPLES)
+                root = S[name][i0]
+                x1, y1 = S[name][min(SAMPLES, i0 + 2)]
+                tx, ty = x1 - root[0], y1 - root[1]
+                l = math.hypot(tx, ty) or 1.0
+                tx, ty = tx / l, ty / l
+                nx, ny = -ty, tx
+                root = (root[0] + 3 * nx, root[1] + 3 * ny)
+                spine = [(root[0] + (tx * v + nx * bend * v * v) * L, root[1] + (ty * v + ny * bend * v * v) * L)
+                         for v in (i / 8 for i in range(9))]
+                R.poly(buf, canv(stroke(spine, [w0 * (1 - 0.75 * i / 8) for i in range(9)])), CREAM)
+
+        # foam smear spreading along the trough after impact
+        if stage == "crash" and c > 0.3 or stage == "wash" and not self.fizzle:
+            spread = 0.4 * (c - 0.3) / 0.7 if stage == "crash" else 0.4 + 0.6 * w
+            smear = S["face"][8:] + S["run"][1:]
+            n = len(smear)
+            R.poly(buf, canv(ribbon(smear, [-6 * math.sin(math.pi * spread) * (0.5 + 0.5 * i / (n - 1)) for i in range(n)])),
+                   CREAM if spread < 0.6 else PALE)
+
+        # claws: grow out of the cap along the underside rail once the lip has formed,
+        # hook into the tube, and fold away as the lip falls
+        kl = smoothstep((d - 0.55) / 0.45) * (1 - smoothstep(c / 0.7))
+        tips = []
+        if kl > 0.05 and stage not in ("wash", "subside"):
+            rail = S["wall"][:10][::-1] + S["under"][::-1][1:]
+            acc = arclen(rail)
+            for j in range(self.n_claws):
+                u = j / max(1, self.n_claws - 1)
+                sl = acc[-1] * (0.05 + 0.88 * (0.65 * u + 0.35 * u * u))
+                (ax, ay), (tx, ty) = at_length(rail, acc, sl)
+                ang = 0.08 * math.sin(math.tau * t / self.flex_period[j] + self.flex_phase[j])
+                ca, sa = math.cos(ang), math.sin(ang)
+                tx, ty = tx * ca - ty * sa, tx * sa + ty * ca
+                nx, ny = -ty, tx
+                cs = self.cs * (1 + self.var[j]) * (0.55 + 0.45 * kl)
+                L = (12 + 10 * u) * cs * kl
+                ax, ay = ax - 2.5 * nx, ay - 2.5 * ny
+                bx, by = ax + L * (0.5 * tx + 0.55 * nx), ay + L * (0.5 * ty + 0.55 * ny)
+                ex, ey = ax + L * (-0.08 * tx + 1.0 * nx), ay + L * (-0.08 * ty + 1.0 * ny)
+                spine, widths = [], []
+                for i in range(11):
+                    v = i / 10
+                    q = 1 - v
+                    spine.append((q * q * ax + 2 * q * v * bx + v * v * ex, q * q * ay + 2 * q * v * by + v * v * ey))
+                    widths.append((0.3 + 2.8 * q ** 1.6) * cs)  # fat root, slender curved point
+                R.poly(buf, canv(stroke(spine, widths)), CREAM)
+                (cx, cy), = canv([(ex, ey)])
+                R.ellipse(buf, cx, cy, 0.8 * cs * s * kx, 0.8 * cs * s * ky, CREAM)
+                tips.append((cx, cy))
+
+        lip = canv(S["crest"][12:] + S["tip"][1:]) if d > 0.75 and stage in ("rise", "hold", "crash") else []
+        burst = canv([S["tip"][-1]])[0] if stage == "crash" and 0.15 < c < 0.8 else None
+        return lip, tips, burst
+
+
+# --- the boats ---------------------------------------------------------------------------
+
+
+class Boat:
+    """an oshiokuri-bune: long hull, raised bow, a row of hunched oarsmen.
+
+    lives in screen design space, rides the real surface, tilts with the slope,
+    goes airborne off a lip, capsizes on a steep face or under a falling lip."""
+
+    def __init__(self, x, y, rng):
+        self.x, self.y, self.vy = x, y, 0.0
+        self.vx = -rng.uniform(3.5, 6.5) if rng.random() < 0.85 else rng.uniform(1.5, 3.0)
+        self.L = rng.uniform(42, 64)
+        self.h = 0.08 * self.L
+        self.crew = rng.randint(6, 10)
+        self.tilt = 0.0
+        self.state, self.age = "float", 0.0
+        self.rhythm = rng.uniform(1.3, 2.0)
+        self.beat = rng.uniform(0, math.tau)
+        self.spin = 1.0
+        self.hull_local = self._hull()
+
+    def _hull(self):
+        L, h = self.L, self.h
+        # a slim crescent: thin amidships, sweeping up into a raised stern and a higher bow
+        return [(-L / 2, -1.1 * h), (-L / 4, -0.4 * h), (0, -0.3 * h), (L / 4, -0.4 * h), (L / 2, -1.4 * h),
+                (0.45 * L, -0.4 * h), (L / 4, 0.25 * h), (0, 0.35 * h), (-L / 4, 0.25 * h), (-0.45 * L, -0.3 * h)]
+
+    def update(self, dt, t, scene, rng, events):
+        self.age += dt
+        if self.state == "sunk":
+            self.y += 6 * dt
+            return
+        if self.state == "capsize":
+            self.tilt += self.spin * 2.6 * dt
+            self.y += 2.5 * dt
+            if self.age > 1.3:
+                self.state, self.age = "sunk", 0.0
+            return
+        self.x += self.vx * dt
+        half = 0.42 * self.L * math.cos(self.tilt)
+        ys, idx, wave = scene.surface(self.x, self.y, t)
+        yl, _, _ = scene.surface(self.x - half, self.y, t)
+        yr, _, _ = scene.surface(self.x + half, self.y, t)
+        slope = math.atan2(yr - yl, 2 * half)
+        if self.state == "air":
+            self.vy += 60 * dt
+            self.y += self.vy * dt
+            if self.y >= ys:
+                self.y = ys
+                events.append(("splash", self.x, self.y, min(1.0, self.vy / 30)))
+                if self.vy > 40:  # a real drop off a lip; a short hop is just a splash
+                    self._capsize(rng, events, -1 if rng.random() < 0.5 else 1)
+                else:
+                    self.state, self.vy = "float", 0.0
+            return
+        # floating: a damped spring to the surface, so the boat bobs rather than snaps
+        if ys - self.y > 5:
+            self.state, self.vy = "air", 0.0
+            return
+        self.vy += (ys - self.y) * 40 * dt - self.vy * 6 * dt
+        self.y += self.vy * dt
+        self.tilt += (slope - self.tilt) * min(1.0, 8 * dt)
+        lip_landing = (wave is not None and wave.stage == "crash" and wave.tip is not None
+                       and abs(wave.tip[0] - self.x) < 0.5 * self.L and wave.tip[1] > self.y - 8)
+        # a face falling away to the right rolls a boat early; the back of a swell
+        # can be climbed almost to vertical (the print's boats hug it)
+        if slope > 1.05 or slope < -1.5 or lip_landing or (idx >= 2 and wave is not None and wave.stage == "crash"):
+            self._capsize(rng, events, 1 if slope > 0 else -1)
+
+    def _capsize(self, rng, events, spin):
+        self.state, self.age, self.spin, self.vx = "capsize", 0.0, spin, self.vx * 0.3
+        events.append(("splash", self.x, self.y, 1.0))
+        ca, sa = math.cos(self.tilt), math.sin(self.tilt)
+        for i in range(self.crew):
+            u = -0.38 + 0.76 * i / max(1, self.crew - 1)
+            lx, ly = u * self.L, -0.4 * self.h - 1.6
+            events.append(("man", self.x + lx * ca - ly * sa, self.y + lx * sa + ly * ca,
+                           rng.uniform(-10, 10) - 0.4 * self.vx, -rng.uniform(8, 22)))
+
+    def done(self, scene):
+        if self.state == "sunk":
+            ys, _, _ = scene.surface(self.x, self.y, 0)
+            return self.y > ys + 9
+        return (self.x < -45 and self.vx < 0) or (self.x > DW + 45 and self.vx > 0)
+
+    def draw(self, buf, t, scene):
+        R, kx, ky = scene.raster, scene.kx, scene.ky
+        ca, sa = math.cos(self.tilt), math.sin(self.tilt)
+        cx, cy = self.x, self.y - 0.25 * self.h
+
+        def place(lx, ly):
+            return ((cx + lx * ca - ly * sa) * kx, (cy + lx * sa + ly * ca) * ky)
+
+        if self.state in ("capsize", "sunk"):  # going under: nothing shows below the waterline
+            ys, _, _ = scene.surface(self.x, self.y, t)
+            R.poly(buf, [place(lx, ly) for lx, ly in self.hull_local], HULL, ymax=(ys + 1) * ky)
+            return
+        R.poly(buf, [place(lx, ly) for lx, ly in self.hull_local], HULL)
+        for i in range(self.crew):
+            u = -0.38 + 0.76 * i / max(1, self.crew - 1)
+            lean = 0.7 * math.sin(math.tau * t / self.rhythm + self.beat + 0.5 * i)
+            px, py = place(u * self.L + lean, -0.4 * self.h - 1.7)
+            R.ellipse(buf, px, py, 1.1 * kx, 1.9 * ky, CREW)
+
+
+# --- the scene ---------------------------------------------------------------------------
+
+
+class Scene:
+    """everything that depends on the terminal size. rebuilt on SIGWINCH."""
+
+    def __init__(self, W, H, rng):
+        self.W, self.H = W, H
+        self.PW, self.PH = PW, PH = 2 * W, 4 * H
+        self.kx, self.ky = PW / DW, PH / DH
+        self.raster = Raster(PW, PH)
+        self.buf = bytearray(PW * PH)
+        self.bg = bytearray(PW * PH)
+        self.cache = {}
+        self.inter = bytearray(8 * W)
+        self.unpack = struct.Struct(f"<{W}Q").unpack
+        self.stars = [
+            (rng.randrange(PW), rng.randrange(int(0.55 * PH)), rng.random() * math.tau)
+            for _ in range(max(12, PW * PH // 900))
+        ]
+        self.waves = []
+        self.boats = []
+        self.particles = []
+        self.emit_acc = 0.0
+        self.last_t = None
+        self.next_main = self.next_fore = self.next_boat = None
+        self.n_main = 0
+        self._fuji()
+
+    def _fuji(self):
+        R, k = self.raster, lambda pts: [(x * self.kx, y * self.ky) for x, y in pts]
+        R.poly(self.bg, k([(197, 141), (218, 114), (240, 141)]), ROCK)
+        R.poly(self.bg, k([(218, 114), (226, 124), (222, 121), (218, 124.5), (214, 121), (210, 124)]), SNOW)
+
+    # -- the sea and its surface --
+
+    @staticmethod
+    def sea_y(x, t):
+        k, w = math.tau / 60, math.tau / 60 * 8
+        return SEA + 2.2 * math.sin(k * x - w * t) + 0.8 * math.sin(2.3 * k * x - 1.7 * w * t)
+
+    def sea(self, buf, t):
+        top = [(x, self.sea_y(x, t)) for x in range(-6, int(DW) + 12, 6)]
+        kx, ky = self.kx, self.ky
+        poly = [(x * kx, y * ky) for x, y in top] + [((DW + 6) * kx, (DH + 4) * ky), (-6 * kx, (DH + 4) * ky)]
+        self.raster.poly(buf, poly, MID)
+        # short pale streaks riding the ripple crests: the print's fine water lines
+        k, w = math.tau / 60, math.tau / 60 * 8
+        first = (w * t + math.pi / 2) / k
+        first -= 60 * math.floor((first + 20) / 60)
+        for i in range(7):
+            cx = first + 60 * i
+            spine = [(cx + u, self.sea_y(cx + u, t) + 2.2) for u in range(-9, 10, 3)]
+            self.raster.poly(buf, [(x * kx, y * ky) for x, y in stroke(spine, [0.9, 1.1, 1.2, 1.2, 1.1, 0.9, 0.6])], PALE)
+
+    def surface(self, x, y_cur, t):
+        """(surface y, boundary index, wave) under a boat at x that currently sits at y_cur.
+
+        boundary index >= 2 means two wave boundaries hang above the boat: it is in the tube."""
+        best, idx, best_wave = self.sea_y(x, t), 0, None
+        for wave in self.waves:
+            if wave.s < 0.6 or not wave.outline:
+                continue
+            ys = crossings(wave.outline, x)
+            for i, y in enumerate(ys[:-1]):  # the last crossing is the sea-level closing edge
+                if y >= y_cur - 8:
+                    if y < best:
+                        best, idx, best_wave = y, i, wave
+                    break
+        return best, idx, best_wave
+
+    # -- spawning --
+
+    def spawn(self, t, rng):
+        if self.next_main is None:  # first frame: a swell already on its way in, boats spread out
+            self.next_main = t - 6
+            self.next_fore = t + rng.uniform(2, 8)
+            self.next_boat = t + rng.uniform(10, 25)
+            x = DW * rng.uniform(0.3, 0.8)
+            self.boats.append(Boat(x, self.sea_y(x, t), rng))
+        if t >= self.next_main:
+            fizzle = self.n_main > 0 and rng.random() < 0.2  # the opening wave always breaks
+            w = Wave(self, self.next_main, rng.uniform(0.8, 1.05), rng.uniform(7.5, 11), rng.uniform(-25, 30),
+                     rng.uniform(3, 8), fizzle, rng.randint(6, 9), 1.0, rng.random())
+            self.waves.append(w)
+            self.n_main += 1
+            self.next_main = w.born + w.total - w.T["wash"] + rng.uniform(0, 10)
+        if t >= self.next_fore:
+            w = Wave(self, self.next_fore, rng.uniform(0.26, 0.4), rng.uniform(24, 34), rng.uniform(150, 700),
+                     rng.uniform(2, 5), rng.random() < 0.3, rng.randint(3, 5), 0.6, rng.random())
+            self.waves.append(w)
+            self.next_fore = w.born + w.total - 0.5 * w.T["wash"] + rng.uniform(2, 14)
+        if t >= self.next_boat:
+            if len(self.boats) < 2:
+                b = Boat(DW + rng.uniform(8, 30), SEA, rng)
+                if b.vx > 0:  # drifters come in from the left
+                    b.x = -rng.uniform(8, 30)
+                if all(abs(b.x - o.x) > 45 for o in self.boats):  # not on top of one already there
+                    self.boats.append(b)
+            # mostly a lone boat; a second one joins now and then
+            self.next_boat = t + (rng.uniform(4, 12) if not self.boats else rng.uniform(20, 45))
+
+    # -- the rest --
+
+    def moon(self, buf, frac):
+        cx = (225 + 90 * frac) * self.kx
+        cy = (75 - 55 * math.sin(math.pi * frac)) * self.ky
+        self.raster.ellipse(buf, cx, cy, 6 * self.kx, 6 * self.ky, MOON)
+
+    def emit(self, dt, lips, tips, bursts, events, rng):
+        kx, ky = self.kx, self.ky
+        P = self.particles
+        # emission is rate-based so fps changes don't change the look
+        self.emit_acc += (14 * bool(lips) + 160 * len(bursts)) * dt
+        while self.emit_acc >= 1:
+            self.emit_acc -= 1
+            r = rng.random()
+            if bursts and r < 160 * len(bursts) / (160 * len(bursts) + 14 * bool(lips)):
+                x, y = bursts[rng.randrange(len(bursts))]
+                P.append([x + rng.uniform(-3, 3) * kx, y, rng.uniform(-14, 22) * kx, -rng.uniform(6, 30) * ky,
+                          rng.uniform(0.6, 1.6), SPRAY])
+            elif lips and (rng.random() < 0.7 or not tips):
+                x, y = lips[rng.randrange(len(lips))]
+                P.append([x, y - 1, rng.uniform(6, 14) * kx, -rng.uniform(6, 14) * ky, rng.uniform(0.8, 1.8), SPRAY])
+            elif tips:
+                x, y = tips[rng.randrange(len(tips))]
+                P.append([x, y + 2.5, rng.uniform(0.5, 2.5) * kx, rng.uniform(2, 6) * ky, rng.uniform(0.8, 1.6), SPRAY])
+        for ev in events:
+            if ev[0] == "splash":
+                _, x, y, k = ev
+                for _ in range(int(4 + 14 * k)):
+                    P.append([x * kx + rng.uniform(-4, 4) * kx, (y - 1) * ky, rng.uniform(-10, 10) * kx,
+                              -rng.uniform(4, 10 + 24 * k) * ky, rng.uniform(0.4, 1.2), SPRAY])
+            else:
+                _, x, y, vx, vy = ev
+                P.append([x * kx, y * ky, vx * kx, vy * ky, 4.0, CREW])
+
+    def step_particles(self, buf, dt, rng):
+        PW, PH, kx, ky = self.PW, self.PH, self.kx, self.ky
+        g = 22 * ky
+        alive = []
+        for p in self.particles:
+            p[0] += p[2] * dt
+            p[1] += p[3] * dt
+            p[3] += g * dt * (2.2 if p[5] == CREW else 1.0)
+            p[4] -= dt
+            x, y = int(p[0]), int(p[1])
+            if p[4] <= 0 or not (0 <= x < PW and 0 <= y < PH):
+                continue
+            if 1 <= buf[y * PW + x] <= 3:
+                if p[5] == CREW:  # a man hits the water
+                    for _ in range(3):
+                        alive.append([p[0], p[1] - 1, rng.uniform(-6, 6) * kx, -rng.uniform(4, 12) * ky, 0.5, SPRAY])
+                continue
+            buf[y * PW + x] = p[5]
+            if p[5] == CREW and 0 <= y - 1:
+                buf[(y - 1) * PW + x] = CREW
+            alive.append(p)
+        self.particles = alive
+
+    def decode(self, key):
+        """8 material bytes (little-endian, index 2*row + col) -> (color material, braille char)."""
+        fg_bits = water_bits = other_bits = 0
+        fg_n = water_n = 0
+        cnt = [0] * NMAT
+        for i in range(8):
+            m = (key >> (8 * i)) & 0xFF
+            if not m:
+                continue
+            bit = BIT[i & 1][i >> 1]
+            cnt[m] += 1
+            if m == CREAM or m == SPRAY or m == HULL or m == CREW:
+                fg_bits |= bit
+                fg_n += 1
+            elif m <= PALE:
+                water_bits |= bit
+                water_n += 1
+            else:
+                other_bits |= bit
+        # one color per cell. foreground (foam, boats) wins with only its own dots,
+        # which keeps claw edges and hulls crisp; a lone foreground dot over water
+        # is absorbed into the water so thin edges don't sparkle.
+        if fg_n >= 2 or (fg_n == 1 and water_n == 0):
+            m = CREW if cnt[CREW] else HULL if cnt[HULL] else CREAM
+            return m, chr(0x2800 | fg_bits | (other_bits if not water_n else 0))
+        if water_n:
+            # highlights are thin, so a few pale dots carry the cell; otherwise the majority shade
+            shade = PALE if cnt[PALE] >= 3 else max(WATER, key=lambda m: (cnt[m], -m))
+            return shade, chr(0x2800 | water_bits | fg_bits | other_bits)
+        if other_bits:
+            return max((ROCK, SNOW, STAR, MOON), key=lambda m: cnt[m]), chr(0x2800 | other_bits)
+        return EMPTY, " "
+
+    def compose(self, buf, colors):
+        W, H, PW = self.W, self.H, self.PW
+        inter, unpack, cache, decode = self.inter, self.unpack, self.cache, self.decode
+        if len(cache) > 300_000:
+            cache.clear()
+        out = []
+        for cy in range(H):
+            base = 4 * cy * PW
+            r0 = buf[base:base + PW]
+            r1 = buf[base + PW:base + 2 * PW]
+            r2 = buf[base + 2 * PW:base + 3 * PW]
+            r3 = buf[base + 3 * PW:base + 4 * PW]
+            if not (r0.strip(b"\0") or r1.strip(b"\0") or r2.strip(b"\0") or r3.strip(b"\0")):
+                out.append(f"\x1b[{cy + 1};1H\x1b[2K")
+                continue
+            inter[0::8] = r0[0::2]
+            inter[1::8] = r0[1::2]
+            inter[2::8] = r1[0::2]
+            inter[3::8] = r1[1::2]
+            inter[4::8] = r2[0::2]
+            inter[5::8] = r2[1::2]
+            inter[6::8] = r3[0::2]
+            inter[7::8] = r3[1::2]
+            parts = [f"\x1b[{cy + 1};1H"]
+            cur = None
+            for key in unpack(inter):
+                e = cache.get(key)
+                if e is None:
+                    e = cache[key] = decode(key)
+                m, ch = e
+                if m and m != cur:
+                    parts.append(colors[m])
+                    cur = m
+                parts.append(ch)
+            out.append("".join(parts))
+        return "".join(out)
+
+    def frame(self, t, pal, rng, moon_frac):
+        dt = 0.0 if self.last_t is None else min(0.1, max(0.0, t - self.last_t))
+        self.last_t = t
+        self.spawn(t, rng)
+        buf = self.buf
+        buf[:] = self.bg
+        PW = self.PW
+        for sx, sy, ph in self.stars:
+            if math.sin(0.7 * t + ph) > -0.35 and not buf[sy * PW + sx]:
+                buf[sy * PW + sx] = STAR
+        self.moon(buf, moon_frac)
+        self.sea(buf, t)
+
+        # far to near: big waves, then the boats on their surface, then the foreground echoes
+        lips, tips, bursts = [], [], []
+        self.waves.sort(key=lambda w: -w.s)
+        for wave in self.waves:
+            if wave.s >= 0.6:
+                lip, tp, burst = wave.draw(buf, t)
+                lips += lip
+                tips += tp
+                if burst:
+                    bursts.append(burst)
+        events = []
+        self.boats.sort(key=lambda b: b.x)
+        for i, boat in enumerate(self.boats):
+            if i and boat.state == "float":  # hold station behind the boat ahead rather than row through it
+                ahead = self.boats[i - 1]
+                if ahead.state == "float" and boat.x - ahead.x < 0.6 * (boat.L + ahead.L) and boat.vx < ahead.vx:
+                    boat.vx = ahead.vx
+            boat.update(dt, t, self, rng, events)
+            boat.draw(buf, t, self)
+        self.boats = [b for b in self.boats if not b.done(self)]
+        for wave in self.waves:
+            if wave.s < 0.6:
+                wave.draw(buf, t)
+        self.waves = [w for w in self.waves if w.stage is not None or w.born > t]
+
+        self.emit(dt, lips, tips, bursts, events, rng)
+        self.step_particles(buf, dt, rng)
+        return self.compose(buf, material_colors(pal))
+
+
+class Palettes:
+    """the drift schedule (one palette per cycle, crossfading at the end of each)
+    plus manual jumps: next/prev/pick land at the start of a palette and crossfade
+    there over SWITCH_S; hold freezes the schedule clock so the palette stays."""
+
+    SWITCH_S = 2.0
+
+    def __init__(self, pals, cycle_s, fade_s, start=0, hold=False):
+        self.pals, self.cycle, self.fade = pals, cycle_s, fade_s
+        self.hold = hold
+        self.shift = start * cycle_s  # schedule time = shift (+ t unless held)
+        self.jump = None  # (t_jump, palette we are fading away from)
+
+    def _clock(self, t):
+        return self.shift + (0.0 if self.hold else t)
+
+    def index(self, t):
+        return int(self._clock(t) // self.cycle) % len(self.pals)
+
+    def scheduled(self, t):
+        n = len(self.pals)
+        pt = self._clock(t)
+        i = int(pt // self.cycle) % n
+        into = pt % self.cycle
+        name, pal = self.pals[i]
+        if n > 1 and not self.hold and into > self.cycle - self.fade:
+            u = smoothstep((into - (self.cycle - self.fade)) / self.fade)
+            nxt_name, nxt = self.pals[(i + 1) % n]
+            pal = {r: mix(pal[r], nxt[r], u) for r in ROLES}
+            if u > 0.5:
+                name = nxt_name
+        return name, pal
+
+    def at(self, t):
+        name, pal = self.scheduled(t)
+        if self.jump is not None:
+            t0, frm = self.jump
+            u = (t - t0) / self.SWITCH_S
+            if u >= 1:
+                self.jump = None
+            else:
+                pal = {r: mix(frm[r], pal[r], smoothstep(u)) for r in ROLES}
+        return name, pal
+
+    def pick(self, t, i):
+        _, frm = self.at(t)
+        i %= len(self.pals)
+        self.shift = i * self.cycle - (0.0 if self.hold else t)
+        self.jump = (t, frm)
+        return self.pals[i][0]
+
+    def step(self, t, k):
+        return self.pick(t, self.index(t) + k)
+
+    def toggle_hold(self, t):
+        pt = self._clock(t)
+        self.hold = not self.hold
+        self.shift = pt - (0.0 if self.hold else t)  # keep the clock continuous
+        return self.hold
+
+
+def palette_index(pals, query):
+    q = query.lower()
+    for i, (name, _) in enumerate(pals):
+        if name.startswith(q):
+            return i
+    names = ", ".join(name for name, _ in pals)
+    sys.exit(f"kanagawa: no palette matches {query!r} (have: {names})")
+
+
+def read_keys(fd):
+    """decode a burst of stdin into key names: printable chars, 'left'/'right'
+    for the arrow CSI sequences, 'esc' for a bare escape."""
+    data = os.read(fd, 64).decode(errors="ignore")
+    keys, i = [], 0
+    while i < len(data):
+        ch = data[i]
+        if ch == "\x1b" and data[i + 1:i + 2] in ("[", "O") and i + 2 < len(data):
+            keys.append({"C": "right", "D": "left"}.get(data[i + 2], ""))
+            i += 3
+        elif ch == "\x1b":
+            keys.append("esc")
+            i += 1
+        else:
+            keys.append(ch)
+            i += 1
+    return keys
+
+
+def hud_text(name, held, elapsed, hours):
+    now = time.strftime("%H:%M")
+    label = f"{name} (held)" if held else name
+    if hours:
+        left = max(0, hours * 3600 - elapsed)
+        return f"{label} · {now} · {int(left // 3600)}h{int(left % 3600 // 60):02d}m left"
+    return f"{label} · {now}"
+
+
+def run(args):
+    loaded = load_palettes()
+    start = palette_index(loaded, args.theme) if args.theme else 0
+    pals = Palettes(loaded, args.cycle * 60, args.fade, start=start, hold=args.hold)
+    rng = random.Random(args.seed)
+    out = sys.stdout
+    fd = sys.stdin.fileno()
+    interactive = sys.stdin.isatty()
+    if interactive:
+        import termios
+        import tty
+        old = termios.tcgetattr(fd)
+        tty.setcbreak(fd)
+    resized = [True]
+    stop = [False]
+    signal.signal(signal.SIGWINCH, lambda *_: resized.__setitem__(0, True))
+    signal.signal(signal.SIGTERM, lambda *_: stop.__setitem__(0, True))
+    out.write("\x1b[?1049h\x1b[?25l\x1b[0m\x1b[2J")
+    out.flush()
+    hud = not args.no_hud
+    toast_until = 0.0  # with the hud hidden, flash the palette name after a switch
+    scene = None
+    t0 = time.monotonic()
+    dt = 1.0 / args.fps
+    try:
+        while not stop[0]:
+            if resized[0]:
+                resized[0] = False
+                size = os.get_terminal_size(out.fileno())
+                scene = Scene(size.columns, size.lines, rng)
+                out.write("\x1b[2J")
+            t = time.monotonic() - t0
+            name, pal = pals.at(t)
+            moon_frac = min(1.0, t / (args.hours * 3600))
+            buf = scene.frame(t, pal, rng, moon_frac)
+            if hud or t < toast_until:
+                text = hud_text(name, pals.hold, t, args.hours if args.hours_given else 0)[: scene.W - 2]
+                buf += f"\x1b[{scene.H};2H{esc(pal['comment'])}{text}"
+            out.write(buf)
+            out.flush()
+            wait = dt - ((time.monotonic() - t0) - t)
+            if interactive:
+                r, _, _ = select.select([fd], [], [], max(0.0, wait))
+                if r:
+                    for key in read_keys(fd):
+                        if key in ("q", "Q", "esc", "\x03"):
+                            stop[0] = True
+                        elif key in ("n", "right", "]"):
+                            pals.step(t, +1)
+                            toast_until = t + 2.5
+                        elif key in ("p", "left", "["):
+                            pals.step(t, -1)
+                            toast_until = t + 2.5
+                        elif key.isdigit() and 1 <= int(key) <= len(pals.pals):
+                            pals.pick(t, int(key) - 1)
+                            toast_until = t + 2.5
+                        elif key == " ":
+                            pals.toggle_hold(t)
+                            toast_until = t + 2.5
+                        elif key == "h":
+                            hud = not hud
+                            out.write("\x1b[2J")
+            elif wait > 0:
+                time.sleep(wait)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        out.write("\x1b[0m\x1b[2J\x1b[?25h\x1b[?1049l")
+        out.flush()
+        if interactive:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old)
+
+
+def bench(args):
+    pals = Palettes(load_palettes(), args.cycle * 60, args.fade)
+    rng = random.Random(args.seed)
+    scene = Scene(args.bench_cols, args.bench_lines, rng)
+    frames = 240
+    t0 = time.perf_counter()
+    for i in range(frames):
+        t = i / args.fps
+        _, pal = pals.at(t)
+        scene.frame(t, pal, rng, 0.3)
+    ms = (time.perf_counter() - t0) / frames * 1000
+    print(f"{args.bench_cols}x{args.bench_lines}: {ms:.1f} ms/frame ({1000 / ms:.0f} fps max)")
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0], epilog=__doc__.split("\n\n", 1)[1],
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--hours", type=float, default=8.0, help="length of the night: the moon rises and sets over it (default 8)")
+    p.add_argument("--cycle", type=float, default=20.0, help="minutes per palette (default 20)")
+    p.add_argument("--fade", type=float, default=90.0, help="seconds of crossfade between palettes (default 90)")
+    p.add_argument("--theme", metavar="NAME", help="start on this palette (prefix ok: kan, nord, cat, rose, ever, gruv)")
+    p.add_argument("--hold", action="store_true", help="stay on one palette instead of drifting (space toggles)")
+    p.add_argument("--fps", type=float, default=24.0)
+    p.add_argument("--seed", type=int, default=None)
+    p.add_argument("--no-hud", action="store_true", help="start with the clock hidden (h toggles)")
+    p.add_argument("--bench", action="store_true", help="time 240 frames headless and exit")
+    p.add_argument("--bench-cols", type=int, default=200)
+    p.add_argument("--bench-lines", type=int, default=60)
+    args = p.parse_args()
+    args.hours_given = any(a.startswith("--hours") for a in sys.argv[1:])
+    if args.bench:
+        bench(args)
+    elif not sys.stdout.isatty():
+        sys.exit("kanagawa: stdout is not a terminal")
+    else:
+        run(args)
+
+
+if __name__ == "__main__":
+    main()

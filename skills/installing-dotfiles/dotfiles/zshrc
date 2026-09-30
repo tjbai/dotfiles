@@ -144,14 +144,17 @@ alias codexh="codex --model=gpt-5-codex -c model_reasoning_effort=\"high\""
 alias test="uvpy -m pytest"
 alias atc="amp thread continue"
 
-allnight() { # allnight [hours] [fish] — stay awake; fish fills the screen with asciiquarium
-  local a hours fish
-  for a in "$@"; do [[ "$a" == fish ]] && fish=1 || hours=$a; done
+allnight() { # allnight [hours] [fish|wave] — stay awake; fish = asciiquarium, wave = kanagawa
+  local a hours scene
+  for a in "$@"; do case "$a" in fish|wave) scene=$a ;; *) hours=$a ;; esac; done
   local -a caf=(caffeinate -dis)
   [[ -n "$hours" ]] && caf+=(-t $(printf '%.0f' $(( hours * 3600 ))))
-  if [[ -n "$fish" ]]; then
+  if [[ -n "$scene" ]]; then
     "${caf[@]}" & local cafpid=$!
-    asciiquarium
+    case "$scene" in
+      fish) asciiquarium ;;
+      wave) ~/dev/dotfiles/bin/kanagawa ${hours:+--hours $hours} ;;
+    esac
     kill $cafpid 2>/dev/null
   else
     "${caf[@]}"
