@@ -9,10 +9,11 @@
 #
 # the repo is canonical: edit here, `sync push`. `sync pull` adopts edits made on
 # ampcode.com. `sync check` reports drift without changing anything (./update
-# runs it). there is no CLI or API for these settings, only the amp tool inside
-# a thread, so pull/push drive a low-mode `amp -x` thread and verify the result
-# with a second pull — the model is the actuator, this script is the judge.
-# vocabulary and secrets have real CLI commands and skip the agent.
+# runs it). there is no CLI or API for these settings, only the manage_amp tool
+# (topic "settings") inside a thread, so pull/push drive a low-mode `amp -x`
+# thread and verify the result with a second pull — the model is the actuator,
+# this script is the judge. vocabulary and secrets have real CLI commands and
+# skip the agent.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIR="$ROOT/amp"
@@ -30,18 +31,19 @@ text_file() {
 }
 is_text() { [[ " $TEXT_KEYS " == *" $1 "* ]]; }
 
-# run one execute-mode thread; print its final text; archive it. fails if the
-# thread did not end in result/success.
+# run one execute-mode thread; archive it; leave its final text in AGENT_SAID
+# so callers can quote it when the agent balked. fails if the thread did not
+# end in result/success.
 agent() { # agent <prompt>
   local stream; stream="$(mktemp)"
   printf '%s' "$1" | amp -x --stream-json --mode low --visibility private --no-notifications --no-ide \
     > "$stream" 2>&1 || true
   local tid; tid="$(jq -r 'select(.type=="system" and .subtype=="init") | .session_id' "$stream" 2>/dev/null | head -1)"
   local ok; ok="$(jq -r 'select(.type=="result") | .subtype' "$stream" 2>/dev/null | tail -1)"
-  jq -r 'select(.type=="assistant") | .message.content[]? | select(.type=="text") | .text' "$stream" 2>/dev/null | tail -3
+  AGENT_SAID="$(jq -r 'select(.type=="assistant") | .message.content[]? | select(.type=="text") | .text' "$stream" 2>/dev/null | tail -3)"
   rm -f "$stream"
   [[ -n "$tid" ]] && amp threads archive "$tid" >/dev/null 2>&1 || true
-  [[ "$ok" == success ]] || die "agent thread ${tid:-?} did not succeed"
+  [[ "$ok" == success ]] || die "agent thread ${tid:-?} did not succeed: $AGENT_SAID"
 }
 
 # LIVE: path to a JSON array of user-scope, editable settings
@@ -49,8 +51,8 @@ pull_live() {
   LIVE="$(mktemp)"
   if [[ -n "${AMP_SYNC_LIVE:-}" ]]; then cp "$AMP_SYNC_LIVE" "$LIVE"; return; fi  # offline testing
   local raw="$LIVE.raw"
-  agent "Use code_exec to import get_settings from \"amp\" and call it with {}. Write the complete JSON result (the full array, pretty-printed) to $raw with the file creation tool. Do not summarize it and do not reply with anything except 'done'." >/dev/null
-  [[ -s "$raw" ]] || die "agent did not write $raw"
+  agent "Call the manage_amp tool with topic \"settings\", operation \"get\", parameters {\"scope\": \"user\"}. Write the complete JSON result (the full array, pretty-printed) to $raw with the file creation tool. Do not summarize it and do not reply with anything except 'done'."
+  [[ -s "$raw" ]] || die "agent did not write $raw: $AGENT_SAID"
   jq -e 'type=="array"' "$raw" >/dev/null || die "$raw is not a JSON array"
   jq '[.[] | select(.scope=="user" and .editable)]' "$raw" > "$LIVE"
   rm -f "$raw"
@@ -145,8 +147,8 @@ do_push() {
   rm -f "$LIVE"
 
   if [[ -n "$prompt" ]]; then
-    agent "Use code_exec to import update_setting from \"amp\" and call it once per item below. These are all non-risky user-scope settings; do not pass confirm. Make no other changes and call no other tools except reading the files named here. Reply only 'done'.
-$prompt" >/dev/null
+    agent "Call the manage_amp tool with topic \"settings\", operation \"update\", once per item below, with parameters {\"key\": ..., \"value\": ...}. These are all non-risky user-scope settings; do not pass confirm. Make no other changes and call no other tools except reading the files named here. Reply only 'done'.
+$prompt"
     # verify: what landed must equal the repo
     pull_live
     local still; still="$(diff_keys)"; rm -f "$LIVE"

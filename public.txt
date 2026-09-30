@@ -1,20 +1,13 @@
 # skills whose content is safe to publish in full (plaintext, name + content).
 # everything else is encrypted to skills/<name>.enc — name public, content hidden.
 # rule: anything that reveals work stays off this list.
-composition-patterns
 datadog
 debugging-firefox-with-playwright
 linear
-react-best-practices
-react-view-transitions
 running-zsh-aliases
 sentry
-using-railway-api
-web-design-guidelines
 writing-simple
-writing-guidelines
 style
-running-react-doctor
 grill-me
 explain-like-im-chud
 running-research-spikes
@@ -25,3 +18,4 @@ shadowboxing
 managing-launchd-jobs
 watching-prs
 explain-like-im-monkey
+react

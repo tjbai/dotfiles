@@ -1,13 +1,5 @@
----
-name: vercel-react-view-transitions
-description: Guide for implementing smooth, native-feeling animations using React's View Transition API (`<ViewTransition>` component, `addTransitionType`, and CSS view transition pseudo-elements). Use this skill whenever the user wants to add page transitions, animate route changes, create shared element animations, animate enter/exit of components, animate list reorder, implement directional (forward/back) navigation animations, or integrate view transitions in Next.js. Also use when the user mentions view transitions, `startViewTransition`, `ViewTransition`, transition types, or asks about animating between UI states in React without third-party animation libraries.
-license: MIT
-metadata:
-  author: vercel
-  version: "1.0.0"
----
 
-# React View Transitions
+# View Transitions
 
 Animate between UI states using the browser's native `document.startViewTransition`. Declare *what* with `<ViewTransition>`, trigger *when* with `startTransition` / `useDeferredValue` / `Suspense`, control *how* with CSS classes. Unsupported browsers skip animations gracefully.
 
@@ -50,7 +42,7 @@ Reserve directional slides for hierarchical navigation (list → detail) and ord
 
 ## Implementation Workflow
 
-When adding view transitions to an existing app, **follow `references/implementation.md` step by step.** Start with the audit — do not skip it. Copy the CSS recipes from `references/css-recipes.md` into the global stylesheet — do not write your own animation CSS.
+When adding view transitions to an existing app, **follow `view-transitions/implementation.md` step by step.** Start with the audit — do not skip it. Copy the CSS recipes from `view-transitions/css-recipes.md` into the global stylesheet — do not write your own animation CSS.
 
 ---
 
@@ -118,7 +110,7 @@ If `default` is `"none"`, all triggers are off unless explicitly listed.
 - `::view-transition-group(.class)` — container
 - `::view-transition-image-pair(.class)` — old + new pair
 
-See `references/css-recipes.md` for ready-to-use animation recipes.
+See `view-transitions/css-recipes.md` for ready-to-use animation recipes.
 
 ---
 
@@ -271,7 +263,7 @@ Directional reveal:
 </Suspense>
 ```
 
-For more patterns, see `references/patterns.md`.
+For more patterns, see `view-transitions/patterns.md`.
 
 ---
 
@@ -298,23 +290,20 @@ When a parent VT exits, nested VTs inside it do **not** fire their own enter/exi
 
 ## Next.js Integration
 
-For Next.js setup (`experimental.viewTransition` flag, `transitionTypes` prop on `next/link`, App Router patterns, Server Components), see `references/nextjs.md`.
+For Next.js setup (`experimental.viewTransition` flag, `transitionTypes` prop on `next/link`, App Router patterns, Server Components), see `view-transitions/nextjs.md`.
 
 ---
 
 ## Accessibility
 
-Always add the reduced motion CSS from `references/css-recipes.md` to your global stylesheet.
+Always add the reduced motion CSS from `view-transitions/css-recipes.md` to your global stylesheet.
 
 ---
 
 ## Reference Files
 
-- **`references/implementation.md`** — Step-by-step implementation workflow.
-- **`references/patterns.md`** — Patterns, animation timing, events API, troubleshooting.
-- **`references/css-recipes.md`** — Ready-to-use CSS animation recipes.
-- **`references/nextjs.md`** — Next.js App Router patterns and Server Component details.
+- **`view-transitions/implementation.md`** — Step-by-step implementation workflow.
+- **`view-transitions/patterns.md`** — Patterns, animation timing, events API, troubleshooting.
+- **`view-transitions/css-recipes.md`** — Ready-to-use CSS animation recipes.
+- **`view-transitions/nextjs.md`** — Next.js App Router patterns and Server Component details.
 
-## Full Compiled Document
-
-For the complete guide with all reference files expanded: `AGENTS.md`

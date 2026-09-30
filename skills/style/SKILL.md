@@ -36,6 +36,6 @@ When the user nudges on style during a session, this skill is stale or wrong. Do
 2. For a theme no reference file covers, propose a new `reference/<topic>.md` plus an index row above.
 3. Keep it minimal: one rule per correction pattern. No restructuring, no rewriting adjacent rules.
 4. Apply only after the user approves.
-5. `~/.config/agents/skills` is a git repo. Commit each amendment separately with a lowercase subject: `style: <rule added or changed>`.
+5. `~/.config/agents/skills` is the source of truth but not a git repo. After editing, run `./update` in `~/dev/dotfiles` and commit there with a lowercase subject: `style: <rule added or changed>`.
 
 Never propose an amendment for a one-off, context-specific instruction. Amend only for corrections that would apply to future sessions.
