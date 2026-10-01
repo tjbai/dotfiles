@@ -37,6 +37,12 @@
   --amp-text-size-scale: 0.92 !important;
 }
 
+/* amp sets `body { font-family: system-ui, … }` directly, bypassing --font-sans,
+   so point body back at the var. */
+body {
+  font-family: var(--font-sans) !important;
+}
+
 /* aui's ink: slightly heavy (450) with linear's inter alternates. tailwind's
    font-normal (400) sits on many wrappers, so re-assert inside the transcript. */
 body,
@@ -152,24 +158,17 @@ body,
 }
 
 /* ── reading column ──
-   amp's is 39rem (624px): the transcript grid sets
-   `grid-template-columns: minmax(0,1fr) minmax(0,39rem) max(3rem, …)` inline, and
-   when thread comments are off the wrapper is `max-w-2xl` (42rem incl. 1.5rem
-   padding each side). the composer wrapper is `max-w-2xl` too. 54rem = 864px. */
+   amp sizes the transcript (`[data-thread-transcript-content]`) and the composer
+   wrapper with one var, `--thread-column-max-width`, set on :root to 42rem
+   (settings → thread width: default / wide = max(42rem, 60%) / full = none). both
+   wrappers carry 1.5rem padding a side, so content = var − 3rem. 54rem of content
+   (864px) ⇒ 57rem. the floating toc / jump-to-bottom pill in
+   .thread-chat-scroll-region is still a hard-coded `max-w-2xl`, matched below. */
 :root {
   --tj-column: 54rem;
+  --thread-column-max-width: calc(var(--tj-column) + 3rem) !important;
 }
-[data-transcript-entry-list].transcript-comments-grid {
-  grid-template-columns:
-    minmax(0, 1fr)
-    minmax(0, var(--tj-column))
-    max(3rem, calc((100% - var(--tj-column)) / 2)) !important;
-}
-/* .thread-chat-scroll-region holds the scroll div and, as a sibling, the floating
-   toc / jump-to-bottom pill (`justify-end` inside its own max-w-2xl wrapper). */
-.thread-chat-scroll-region .max-w-2xl,
-[data-thread-transcript-scroll] .max-w-2xl,
-.max-w-2xl:has([data-message-composer-root]) {
+.thread-chat-scroll-region .max-w-2xl {
   max-width: calc(var(--tj-column) + 3rem) !important;
 }
 
@@ -177,25 +176,23 @@ body,
    amp marks an unread thread with a 6px `bg-terminal-bright-blue` badge pinned to
    the executor icon (`[data-thread-row-unread-badge]`, always in the dom, toggled
    opacity-0 → opacity-100) and bumps the title from font-normal to font-medium.
-   an older row variant uses a standalone dot with aria-label "Unread" — kept as a
-   fallback. no data-* on the row itself, so key off the badge with :has(). the row
-   is `.group/thread-row`; the selected row carries `bg-accent` and is left alone.
+   no data-* on the row itself, so key off the badge with :has(). the row is
+   `.group/thread-row`; the selected row carries `bg-accent` and is left alone.
    title takes the accent color and a bit more weight; the badge grows to 8px with
-   a sidebar-colored ring so it reads as a dot, not a smudge on the icon. */
+   a sidebar-colored ring so it reads as a dot, not a smudge on the icon. the badge
+   is sized by `size-1.5!` — tailwind's layered !important beats an unlayered one
+   from here — so grow it with transform instead of width/height. */
 :root {
   --tj-unread: var(--terminal-bright-blue);
 }
-.group\/thread-row:not(.bg-accent):has([data-thread-row-unread-badge].opacity-100) .text-base.font-medium,
-.group\/thread-row:not(.bg-accent):has([aria-label^="Unread"]) .text-base.font-medium {
+.group\/thread-row:not(.bg-accent):has([data-thread-row-unread-badge].opacity-100) .text-base.font-medium {
   color: var(--tj-unread) !important;
   font-weight: 650 !important;
 }
-.group\/thread-row [data-thread-row-unread-badge].opacity-100,
-.group\/thread-row [aria-label^="Unread"].rounded-full {
-  width: 0.5rem !important;
-  height: 0.5rem !important;
+.group\/thread-row [data-thread-row-unread-badge].opacity-100 {
+  transform: scale(1.33) !important; /* 6px → 8px */
   background: var(--tj-unread) !important;
-  box-shadow: 0 0 0 2px var(--sidebar, var(--background)) !important;
+  box-shadow: 0 0 0 1.5px var(--sidebar, var(--background)) !important;
 }
 
 /* ── code editor / diff views (codemirror). settings → appearance writes these; pin here. ──
