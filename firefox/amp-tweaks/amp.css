@@ -158,18 +158,34 @@ body,
 }
 
 /* ── reading column ──
-   amp sizes the transcript (`[data-thread-transcript-content]`) and the composer
-   wrapper with one var, `--thread-column-max-width`, set on :root to 42rem
-   (settings → thread width: default / wide = max(42rem, 60%) / full = none). both
-   wrappers carry 1.5rem padding a side, so content = var − 3rem. 54rem of content
-   (864px) ⇒ 57rem. the floating toc / jump-to-bottom pill in
-   .thread-chat-scroll-region is still a hard-coded `max-w-2xl`, matched below. */
+   two layouts, keyed off whether thread comments are on for the account:
+   · comments off: the transcript (`[data-thread-transcript-content]`) is
+     `max-w-(--thread-column-max-width)`, :root 42rem (settings → thread width:
+     default / wide = max(42rem, 60%) / full = none), 1.5rem padding a side.
+   · comments on (current): the transcript content has no max-width; the entry list
+     `[data-transcript-entry-list].transcript-comments-grid` is a 3-col grid with an
+     inline `grid-template-columns: minmax(0,1fr) minmax(0,39rem) max(3rem, …)`,
+     col 2 the entries, col 3 the comments gutter (3rem, 18rem when a comment is
+     expanded, `0 minmax(0,1fr) 3rem` in full width). the var is only used by the
+     composer wrapper (`p-2`, so form = var − 1rem) and the floating toc /
+     jump-to-bottom pill (`max-w-2xl`). stock: 39rem transcript, 42rem composer.
+   keep that 3rem relation: --tj-column (54rem = 864px) for the transcript, +3rem
+   for the composer + pill. the grid's inline style has no !important, so a
+   stylesheet !important wins; skip the expanded (18rem) and full-width states,
+   which only exist in that inline string. */
 :root {
   --tj-column: 54rem;
   --thread-column-max-width: calc(var(--tj-column) + 3rem) !important;
 }
 .thread-chat-scroll-region .max-w-2xl {
   max-width: calc(var(--tj-column) + 3rem) !important;
+}
+html:not([data-thread-width="full"])
+  [data-transcript-entry-list].transcript-comments-grid:not([style*="18rem"]) {
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, var(--tj-column))
+    max(3rem, calc((100% - var(--tj-column)) / 2)) !important;
 }
 
 /* ── sidebar: loud unread ──
