@@ -74,7 +74,11 @@ function css(name: string, p: Palette): string {
 	// themes use :root[data-amp-theme=...], so every override is !important
 	// to win on specificity regardless of what the user has picked in-app.
 	const vars: [string, string][] = [
-		["--background", `${p.bg}`],
+		// --background is amp's raised layer: the composer form, floating pills,
+		// toolbars (`bg-background`). the page, transcript and sidebar paint from
+		// --app-surface-background. stock dark keeps them 3% apart; use bg1 so
+		// the composer lifts off the page instead of going flat.
+		["--background", `${p.bg1}`],
 		// inline <head> style paints html/body and the main surface from these,
 		// not from --background. both light and dark so color-scheme can't leak.
 		["--amp-shell-light-background-color", `${p.bg}`],

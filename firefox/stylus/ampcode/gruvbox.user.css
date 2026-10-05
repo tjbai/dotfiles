@@ -7,7 +7,7 @@
 @-moz-document domain("ampcode.com") {
   :root, [data-amp-content-theme], .app-shell {
     color-scheme: dark !important;
-    --background: #282828 !important;
+    --background: #32302f !important;
     --amp-shell-light-background-color: #282828 !important;
     --amp-shell-dark-background-color: #282828 !important;
     --amp-surface-light-background-color: #282828 !important;
