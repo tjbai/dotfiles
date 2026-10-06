@@ -100,10 +100,15 @@ body,
   font-weight: 600 !important; /* amp: 700 */
 }
 
-.markdown a {
+/* amp's markdown links are foreground + underline, nothing else. dropping the
+   underline (below) leaves them indistinguishable, so take amp's own semantic
+   link color (`--link`, what `.text-link` uses; the stylus palettes map it to
+   each theme's blue). link chips are already pills, leave them alone. */
+.markdown a:not([data-amp-link-chip]) {
+  color: var(--link) !important;
   text-decoration: none !important;
 }
-.markdown a:hover {
+.markdown a:not([data-amp-link-chip]):hover {
   text-decoration: underline !important;
 }
 
