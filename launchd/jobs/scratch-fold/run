@@ -125,7 +125,8 @@ def tree_of(sha):
 def fold_group(tip, end, keys, group, label):
     """one commit on tip whose files (those touched by the group) match `end`."""
     files = sorted({p for c in group for p in c.files})
-    index = os.path.join(git("rev-parse", "--git-dir"), f"fold-index-{os.getpid()}")
+    # absolute: --git-dir is relative to REPO, but os.path below is relative to our cwd.
+    index = os.path.join(git("rev-parse", "--absolute-git-dir"), f"fold-index-{os.getpid()}")
     env = {"GIT_INDEX_FILE": index}
     try:
         git("read-tree", tip, env=env)
@@ -163,7 +164,7 @@ def sync_vault(branch):
     if branch != "inbox":
         log(f"vault is on '{branch}', not inbox; not pulling")
         return
-    gitdir = git("rev-parse", "--git-dir")
+    gitdir = git("rev-parse", "--absolute-git-dir")
     if git("status", "--porcelain", "--untracked-files=no") \
             or os.path.exists(os.path.join(gitdir, "rebase-merge")):
         log("vault dirty; not pulling (run `git pull --rebase` in ~/auctor/scratch)")
