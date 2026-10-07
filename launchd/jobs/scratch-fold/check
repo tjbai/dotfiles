@@ -6,6 +6,13 @@ repo="$HOME/auctor/scratch"
 git -C "$repo" fetch --quiet origin main inbox 2>/dev/null || { echo "fetch failed"; exit 1; }
 branch="$(git -C "$repo" rev-parse --abbrev-ref HEAD)"
 [[ "$branch" == inbox ]] || { echo "vault on '$branch', expected inbox"; exit 1; }
+# fresh clones (orbs: --depth 1) land on the default branch; if it drifts to
+# main they push main and the fold dies. skip when gh is offline or unauthed.
+default="$(gh api repos/tjbai/scratch --jq .default_branch 2>/dev/null)" || default=""
+if [[ -n "$default" && "$default" != inbox ]]; then
+  echo "github default branch is '$default', expected inbox — gh repo edit tjbai/scratch --default-branch inbox"
+  exit 1
+fi
 # anything on inbox older than two windows should have been folded by now.
 stale="$(git -C "$repo" rev-list --count --before="8 hours ago" origin/main..origin/inbox)"
 if (( stale > 0 )); then
