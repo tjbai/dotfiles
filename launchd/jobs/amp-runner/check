@@ -7,7 +7,12 @@
 # therefore lies; compare the inode the process actually mapped instead.
 set -u
 label="gui/$(id -u)/com.tjbai.amp-runner"
-pid="$(pgrep -f 'amp --no-tui --runner-id work' | head -1)"
+# -a: pgrep skips its own ancestors by default, and the runner is one when doctor
+# runs from a runner thread. take the amp child of the launchd-managed wrapper;
+# fall back to the command line, anchored so a parent shell can't match.
+lpid="$(launchctl print "$label" 2>/dev/null | awk '$1=="pid" && $2=="=" {print $3; exit}')"
+pid="$([[ -n "$lpid" ]] && pgrep -a -P "$lpid" -x amp | head -1)"
+[[ -n "$pid" ]] || pid="$(pgrep -af '^[^ ]*/amp --no-tui --runner-id work' | head -1)"
 [[ -n "$pid" ]] || { echo "runner process not found"; exit 1; }
 bin="$HOME/.amp/bin/amp"
 running="$(lsof -p "$pid" 2>/dev/null | awk -v b="$bin" '$4=="txt" && $NF==b {print $8; exit}')"
