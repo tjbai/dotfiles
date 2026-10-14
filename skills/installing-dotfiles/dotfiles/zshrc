@@ -191,3 +191,100 @@ path=("${(@)path:#/Users/bai/Library/Application Support/Coursier/bin}")
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+# land <pr-url|number> [timeout-minutes] — in the background: wait for CI, merge with ghm, say what happened
+# land [status] | land clear | land cancel <number>
+LAND_DIR=~/.local/state/land
+land() {
+  case "$1" in
+    ""|status) _land_status; return ;;
+    clear) _land_clear; return ;;
+    cancel)
+      [[ -f "$LAND_DIR/$2/pid" ]] || { echo "land: no job for #$2" >&2; return 1 }
+      kill "$(<"$LAND_DIR/$2/pid")" 2>/dev/null
+      _land_finish "$LAND_DIR/$2" cancelled "cancelled PR $2" 2>/dev/null
+      return ;;
+  esac
+  local pr="$1" timeout="${2:-10}"
+  [[ "$timeout" =~ '^[0-9]+$' ]] || { echo "usage: land <pr> [timeout-minutes]" >&2; return 2 }
+  local number title
+  IFS=$'\t' read -r number title < <(gh pr view "$pr" --json number,title --jq '[.number,.title]|@tsv' 2>/dev/null)
+  [[ -z "$number" ]] && { echo "land: could not read PR $pr" >&2; return 1 }
+  local dir="$LAND_DIR/$number"
+  if [[ -f "$dir/pid" ]] && kill -0 "$(<"$dir/pid")" 2>/dev/null; then
+    echo "land: #$number is already being watched" >&2; return 1
+  fi
+  rm -rf "$dir"; mkdir -p "$dir"
+  print -r -- "$title" > "$dir/title"
+  date +%s > "$dir/start"
+  print -r -- $'watching\t'"starting" > "$dir/status"
+  ( _land_watch "$pr" "$number" "$title" "$timeout" "$dir" ) > "$dir/log" 2>&1 &!
+  print $! > "$dir/pid"
+  echo "land: watching #$number for up to ${timeout}m: $title"
+}
+_land_watch() {
+  local pr="$1" number="$2" title="$3" timeout="$4" dir="$5"
+  local start=$SECONDS state mstatus draft checks
+  while true; do
+    IFS=$'\t' read -r state mstatus draft checks < <(
+      gh pr view "$pr" --json state,mergeStateStatus,isDraft,statusCheckRollup --jq '
+        . as $pr | ($pr.statusCheckRollup // []) as $c
+        | (if ([$c[] | select((.status? // "COMPLETED") != "COMPLETED" or ((.state? // "") | IN("PENDING","EXPECTED")))] | length) > 0 then "pending"
+           elif ([$c[] | select(((.conclusion? // .state? // "") | IN("FAILURE","CANCELLED","TIMED_OUT","ACTION_REQUIRED","ERROR","STARTUP_FAILURE")))] | length) > 0 then "failed"
+           else "passed" end) as $checks
+        | [$pr.state, $pr.mergeStateStatus, $pr.isDraft, $checks] | @tsv'
+    )
+    [[ -z "$state" ]] && { _land_finish "$dir" blocked "could not read PR $number, revisit"; return 1 }
+    case "$state" in
+      MERGED) _land_finish "$dir" merged "PR $number already merged: $title"; return 0 ;;
+      CLOSED) _land_finish "$dir" blocked "PR $number is closed, not merging: $title"; return 1 ;;
+    esac
+    [[ "$draft" == true ]] && { _land_finish "$dir" blocked "PR $number is a draft, revisit: $title"; return 1 }
+    case "$mstatus/$checks" in
+      */pending|UNKNOWN/*) ;;
+      BEHIND/*)
+        echo "$(date +%H:%M) behind base, updating branch"
+        gh pr update-branch "$pr" >/dev/null || { _land_finish "$dir" blocked "PR $number blocked, could not update branch, revisit: $title"; return 1 } ;;
+      CLEAN/*|HAS_HOOKS/*|UNSTABLE/*)
+        local note=""; [[ "$mstatus" == UNSTABLE ]] && note=", with a non-required check failing"
+        if ghm "$pr"; then _land_finish "$dir" merged "merged PR $number$note: $title"; return 0
+        else _land_finish "$dir" blocked "PR $number merge failed, revisit: $title"; return 1; fi ;;
+      */failed) _land_finish "$dir" blocked "PR $number blocked, CI failed, revisit: $title"; return 1 ;;
+      DIRTY/*)  _land_finish "$dir" blocked "PR $number blocked, merge conflicts, revisit: $title"; return 1 ;;
+      BLOCKED/*) _land_finish "$dir" blocked "PR $number blocked, needs review, revisit: $title"; return 1 ;;
+      *) _land_finish "$dir" blocked "PR $number in unexpected state $mstatus, revisit: $title"; return 1 ;;
+    esac
+    (( SECONDS - start > timeout * 60 )) && { _land_finish "$dir" timeout "timed out after ${timeout} minutes waiting on PR $number, revisit: $title"; return 1 }
+    print -r -- $'watching\t'"$mstatus, checks $checks" > "$dir/status"
+    echo "$(date +%H:%M) $mstatus, checks $checks"
+    sleep 30
+  done
+}
+_land_finish() { # dir kind message — record, log, and speak the outcome
+  print -r -- "$2"$'\t'"$3" > "$1/status"
+  echo "$(date +%H:%M) $3"
+  local sound=Basso; [[ "$2" == merged ]] && sound=Hero
+  afplay "/System/Library/Sounds/$sound.aiff"
+  say "$3"
+}
+_land_status() {
+  setopt localoptions nullglob
+  local d kind msg elapsed
+  local -a dirs=($LAND_DIR/*(/N))
+  (( $#dirs )) || { echo "land: nothing queued"; return }
+  for d in $dirs; do
+    IFS=$'\t' read -r kind msg < "$d/status"
+    elapsed=$(( ($(date +%s) - $(<"$d/start")) / 60 ))
+    [[ "$kind" == watching ]] && { kill -0 "$(<"$d/pid")" 2>/dev/null || kind=died; msg="$msg: $(<"$d/title")" }
+    printf '#%-6s %-9s %3dm  %s\n' "${d:t}" "$kind" "$elapsed" "$msg"
+  done
+}
+_land_clear() { # drop finished jobs
+  setopt localoptions nullglob
+  local d kind
+  for d in $LAND_DIR/*(/N); do
+    IFS=$'\t' read -r kind _ < "$d/status"
+    [[ "$kind" == watching ]] && kill -0 "$(<"$d/pid")" 2>/dev/null && continue
+    rm -rf "$d"
+  done
+}
