@@ -1,0 +1,76 @@
+/* ==UserStyle==
+@name         ampcode Catppuccin Latte
+@namespace    tjbai/amp-web-themes
+@version      1.2.0
+@description  Catppuccin Latte palette for ampcode.com.
+==/UserStyle== */
+@-moz-document domain("ampcode.com") {
+  :root, [data-amp-content-theme], .app-shell {
+    color-scheme: light !important;
+    --background: #e6e9ef !important;
+    --amp-shell-light-background-color: #eff1f5 !important;
+    --amp-shell-dark-background-color: #eff1f5 !important;
+    --amp-surface-light-background-color: #eff1f5 !important;
+    --amp-surface-dark-background-color: #eff1f5 !important;
+    --app-surface-background: #eff1f5 !important;
+    --foreground: #4c4f69 !important;
+    --border: #bcc0cc !important;
+    --muted: #ccd0da !important;
+    --muted-foreground: #6c6f85 !important;
+    --card: #e6e9ef !important;
+    --popover: #e6e9ef !important;
+    --input-background: #e6e9ef !important;
+    --input-border: #bcc0cc !important;
+    --primary: #4c4f69 !important;
+    --primary-hover: #6c6f85 !important;
+    --primary-foreground: #eff1f5 !important;
+    --secondary: #ccd0da !important;
+    --secondary-hover: #bcc0cc !important;
+    --secondary-foreground: #4c4f69 !important;
+    --accent: #ccd0da !important;
+    --accent-foreground: #4c4f69 !important;
+    --ring: #1e66f5 !important;
+    --link: #1e66f5 !important;
+    --brand: #fe640b !important;
+    --mention: #8839ef !important;
+    --success: #40a02b !important;
+    --warning: #df8e1d !important;
+    --warning-foreground: #eff1f5 !important;
+    --warning-border: #df8e1d !important;
+    --destructive: #d20f39 !important;
+    --destructive-background: #d20f39 !important;
+    --destructive-foreground: #eff1f5 !important;
+    --selection-background: color-mix(in oklab, #1e66f5 30%, transparent) !important;
+    --transcript-selection-background: color-mix(in oklab, #40a02b 30%, transparent) !important;
+    --linked-passage-background: color-mix(in oklab, #8839ef 25%, transparent) !important;
+    --editor-background: #e6e9ef !important;
+    --editor-foreground: #4c4f69 !important;
+    --diff-addition-background: color-mix(in oklab, #40a02b 12%, #eff1f5) !important;
+    --diff-removal-background: color-mix(in oklab, #d20f39 12%, #eff1f5) !important;
+    --diff-addition-foreground: #40a02b !important;
+    --diff-removal-foreground: #d20f39 !important;
+    --diff-meta-foreground: #df8e1d !important;
+    --hljs-function: #1e66f5 !important;
+    --hljs-keyword: #8839ef !important;
+    --hljs-class: #df8e1d !important;
+    --hljs-string: #40a02b !important;
+    --hljs-comment: #7c7f93 !important;
+    --hljs-number: #fe640b !important;
+    --terminal-black: #6c6f85 !important;
+    --terminal-red: #d20f39 !important;
+    --terminal-green: #40a02b !important;
+    --terminal-yellow: #df8e1d !important;
+    --terminal-blue: #1e66f5 !important;
+    --terminal-magenta: #8839ef !important;
+    --terminal-cyan: #179299 !important;
+    --terminal-white: #6c6f85 !important;
+    --terminal-bright-black: #7c7f93 !important;
+    --terminal-bright-red: #d20f39 !important;
+    --terminal-bright-green: #40a02b !important;
+    --terminal-bright-yellow: #df8e1d !important;
+    --terminal-bright-blue: #1e66f5 !important;
+    --terminal-bright-magenta: #8839ef !important;
+    --terminal-bright-cyan: #179299 !important;
+    --terminal-bright-white: #4c4f69 !important;
+  }
+}

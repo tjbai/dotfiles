@@ -1,0 +1,76 @@
+/* ==UserStyle==
+@name         ampcode Modus Operandi
+@namespace    tjbai/amp-web-themes
+@version      1.2.0
+@description  Modus Operandi palette for ampcode.com.
+==/UserStyle== */
+@-moz-document domain("ampcode.com") {
+  :root, [data-amp-content-theme], .app-shell {
+    color-scheme: light !important;
+    --background: #f2f2f2 !important;
+    --amp-shell-light-background-color: #ffffff !important;
+    --amp-shell-dark-background-color: #ffffff !important;
+    --amp-surface-light-background-color: #ffffff !important;
+    --amp-surface-dark-background-color: #ffffff !important;
+    --app-surface-background: #ffffff !important;
+    --foreground: #000000 !important;
+    --border: #c4c4c4 !important;
+    --muted: #e0e0e0 !important;
+    --muted-foreground: #595959 !important;
+    --card: #f2f2f2 !important;
+    --popover: #f2f2f2 !important;
+    --input-background: #f2f2f2 !important;
+    --input-border: #c4c4c4 !important;
+    --primary: #000000 !important;
+    --primary-hover: #595959 !important;
+    --primary-foreground: #ffffff !important;
+    --secondary: #e0e0e0 !important;
+    --secondary-hover: #c4c4c4 !important;
+    --secondary-foreground: #000000 !important;
+    --accent: #e0e0e0 !important;
+    --accent-foreground: #000000 !important;
+    --ring: #0031a9 !important;
+    --link: #0031a9 !important;
+    --brand: #972500 !important;
+    --mention: #721045 !important;
+    --success: #006800 !important;
+    --warning: #6f5500 !important;
+    --warning-foreground: #ffffff !important;
+    --warning-border: #6f5500 !important;
+    --destructive: #a60000 !important;
+    --destructive-background: #a60000 !important;
+    --destructive-foreground: #ffffff !important;
+    --selection-background: color-mix(in oklab, #0031a9 30%, transparent) !important;
+    --transcript-selection-background: color-mix(in oklab, #006800 30%, transparent) !important;
+    --linked-passage-background: color-mix(in oklab, #721045 25%, transparent) !important;
+    --editor-background: #f2f2f2 !important;
+    --editor-foreground: #000000 !important;
+    --diff-addition-background: color-mix(in oklab, #006800 12%, #ffffff) !important;
+    --diff-removal-background: color-mix(in oklab, #a60000 12%, #ffffff) !important;
+    --diff-addition-foreground: #006800 !important;
+    --diff-removal-foreground: #a60000 !important;
+    --diff-meta-foreground: #6f5500 !important;
+    --hljs-function: #0031a9 !important;
+    --hljs-keyword: #721045 !important;
+    --hljs-class: #6f5500 !important;
+    --hljs-string: #006800 !important;
+    --hljs-comment: #595959 !important;
+    --hljs-number: #972500 !important;
+    --terminal-black: #595959 !important;
+    --terminal-red: #a60000 !important;
+    --terminal-green: #006800 !important;
+    --terminal-yellow: #6f5500 !important;
+    --terminal-blue: #0031a9 !important;
+    --terminal-magenta: #721045 !important;
+    --terminal-cyan: #005e8b !important;
+    --terminal-white: #595959 !important;
+    --terminal-bright-black: #595959 !important;
+    --terminal-bright-red: #a60000 !important;
+    --terminal-bright-green: #006800 !important;
+    --terminal-bright-yellow: #6f5500 !important;
+    --terminal-bright-blue: #0031a9 !important;
+    --terminal-bright-magenta: #721045 !important;
+    --terminal-bright-cyan: #005e8b !important;
+    --terminal-bright-white: #000000 !important;
+  }
+}

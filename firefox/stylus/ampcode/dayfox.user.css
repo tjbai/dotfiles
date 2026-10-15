@@ -1,0 +1,76 @@
+/* ==UserStyle==
+@name         ampcode Dayfox
+@namespace    tjbai/amp-web-themes
+@version      1.2.0
+@description  Dayfox palette for ampcode.com.
+==/UserStyle== */
+@-moz-document domain("ampcode.com") {
+  :root, [data-amp-content-theme], .app-shell {
+    color-scheme: light !important;
+    --background: #e4dcd4 !important;
+    --amp-shell-light-background-color: #f6f2ee !important;
+    --amp-shell-dark-background-color: #f6f2ee !important;
+    --amp-surface-light-background-color: #f6f2ee !important;
+    --amp-surface-dark-background-color: #f6f2ee !important;
+    --app-surface-background: #f6f2ee !important;
+    --foreground: #3d2b5a !important;
+    --border: #d3c7bb !important;
+    --muted: #dbd1dd !important;
+    --muted-foreground: #643f61 !important;
+    --card: #e4dcd4 !important;
+    --popover: #e4dcd4 !important;
+    --input-background: #e4dcd4 !important;
+    --input-border: #d3c7bb !important;
+    --primary: #3d2b5a !important;
+    --primary-hover: #643f61 !important;
+    --primary-foreground: #f6f2ee !important;
+    --secondary: #dbd1dd !important;
+    --secondary-hover: #d3c7bb !important;
+    --secondary-foreground: #3d2b5a !important;
+    --accent: #dbd1dd !important;
+    --accent-foreground: #3d2b5a !important;
+    --ring: #2848a9 !important;
+    --link: #2848a9 !important;
+    --brand: #955f61 !important;
+    --mention: #6e33ce !important;
+    --success: #396847 !important;
+    --warning: #ac5402 !important;
+    --warning-foreground: #f6f2ee !important;
+    --warning-border: #ac5402 !important;
+    --destructive: #a5222f !important;
+    --destructive-background: #a5222f !important;
+    --destructive-foreground: #f6f2ee !important;
+    --selection-background: color-mix(in oklab, #2848a9 30%, transparent) !important;
+    --transcript-selection-background: color-mix(in oklab, #396847 30%, transparent) !important;
+    --linked-passage-background: color-mix(in oklab, #6e33ce 25%, transparent) !important;
+    --editor-background: #e4dcd4 !important;
+    --editor-foreground: #3d2b5a !important;
+    --diff-addition-background: color-mix(in oklab, #396847 12%, #f6f2ee) !important;
+    --diff-removal-background: color-mix(in oklab, #a5222f 12%, #f6f2ee) !important;
+    --diff-addition-foreground: #396847 !important;
+    --diff-removal-foreground: #a5222f !important;
+    --diff-meta-foreground: #ac5402 !important;
+    --hljs-function: #2848a9 !important;
+    --hljs-keyword: #6e33ce !important;
+    --hljs-class: #ac5402 !important;
+    --hljs-string: #396847 !important;
+    --hljs-comment: #837a72 !important;
+    --hljs-number: #955f61 !important;
+    --terminal-black: #643f61 !important;
+    --terminal-red: #a5222f !important;
+    --terminal-green: #396847 !important;
+    --terminal-yellow: #ac5402 !important;
+    --terminal-blue: #2848a9 !important;
+    --terminal-magenta: #6e33ce !important;
+    --terminal-cyan: #287980 !important;
+    --terminal-white: #643f61 !important;
+    --terminal-bright-black: #837a72 !important;
+    --terminal-bright-red: #a5222f !important;
+    --terminal-bright-green: #396847 !important;
+    --terminal-bright-yellow: #ac5402 !important;
+    --terminal-bright-blue: #2848a9 !important;
+    --terminal-bright-magenta: #6e33ce !important;
+    --terminal-bright-cyan: #287980 !important;
+    --terminal-bright-white: #3d2b5a !important;
+  }
+}

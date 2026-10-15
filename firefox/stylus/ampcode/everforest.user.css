@@ -1,8 +1,8 @@
 /* ==UserStyle==
 @name         ampcode Everforest Dark
 @namespace    tjbai/amp-web-themes
-@version      1.1.0
-@description  Everforest Dark palette for ampcode.com, ported from sentinel.
+@version      1.2.0
+@description  Everforest Dark palette for ampcode.com.
 ==/UserStyle== */
 @-moz-document domain("ampcode.com") {
   :root, [data-amp-content-theme], .app-shell {

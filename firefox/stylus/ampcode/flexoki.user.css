@@ -1,0 +1,76 @@
+/* ==UserStyle==
+@name         ampcode Flexoki Light
+@namespace    tjbai/amp-web-themes
+@version      1.2.0
+@description  Flexoki Light palette for ampcode.com.
+==/UserStyle== */
+@-moz-document domain("ampcode.com") {
+  :root, [data-amp-content-theme], .app-shell {
+    color-scheme: light !important;
+    --background: #f2f0e5 !important;
+    --amp-shell-light-background-color: #fffcf0 !important;
+    --amp-shell-dark-background-color: #fffcf0 !important;
+    --amp-surface-light-background-color: #fffcf0 !important;
+    --amp-surface-dark-background-color: #fffcf0 !important;
+    --app-surface-background: #fffcf0 !important;
+    --foreground: #100f0f !important;
+    --border: #cecdc3 !important;
+    --muted: #e6e4d9 !important;
+    --muted-foreground: #6f6e69 !important;
+    --card: #f2f0e5 !important;
+    --popover: #f2f0e5 !important;
+    --input-background: #f2f0e5 !important;
+    --input-border: #cecdc3 !important;
+    --primary: #100f0f !important;
+    --primary-hover: #6f6e69 !important;
+    --primary-foreground: #fffcf0 !important;
+    --secondary: #e6e4d9 !important;
+    --secondary-hover: #cecdc3 !important;
+    --secondary-foreground: #100f0f !important;
+    --accent: #e6e4d9 !important;
+    --accent-foreground: #100f0f !important;
+    --ring: #205ea6 !important;
+    --link: #205ea6 !important;
+    --brand: #bc5215 !important;
+    --mention: #5e409d !important;
+    --success: #66800b !important;
+    --warning: #ad8301 !important;
+    --warning-foreground: #fffcf0 !important;
+    --warning-border: #ad8301 !important;
+    --destructive: #af3029 !important;
+    --destructive-background: #af3029 !important;
+    --destructive-foreground: #fffcf0 !important;
+    --selection-background: color-mix(in oklab, #205ea6 30%, transparent) !important;
+    --transcript-selection-background: color-mix(in oklab, #66800b 30%, transparent) !important;
+    --linked-passage-background: color-mix(in oklab, #5e409d 25%, transparent) !important;
+    --editor-background: #f2f0e5 !important;
+    --editor-foreground: #100f0f !important;
+    --diff-addition-background: color-mix(in oklab, #66800b 12%, #fffcf0) !important;
+    --diff-removal-background: color-mix(in oklab, #af3029 12%, #fffcf0) !important;
+    --diff-addition-foreground: #66800b !important;
+    --diff-removal-foreground: #af3029 !important;
+    --diff-meta-foreground: #ad8301 !important;
+    --hljs-function: #205ea6 !important;
+    --hljs-keyword: #5e409d !important;
+    --hljs-class: #ad8301 !important;
+    --hljs-string: #66800b !important;
+    --hljs-comment: #878580 !important;
+    --hljs-number: #bc5215 !important;
+    --terminal-black: #6f6e69 !important;
+    --terminal-red: #af3029 !important;
+    --terminal-green: #66800b !important;
+    --terminal-yellow: #ad8301 !important;
+    --terminal-blue: #205ea6 !important;
+    --terminal-magenta: #5e409d !important;
+    --terminal-cyan: #24837b !important;
+    --terminal-white: #6f6e69 !important;
+    --terminal-bright-black: #878580 !important;
+    --terminal-bright-red: #af3029 !important;
+    --terminal-bright-green: #66800b !important;
+    --terminal-bright-yellow: #ad8301 !important;
+    --terminal-bright-blue: #205ea6 !important;
+    --terminal-bright-magenta: #5e409d !important;
+    --terminal-bright-cyan: #24837b !important;
+    --terminal-bright-white: #100f0f !important;
+  }
+}

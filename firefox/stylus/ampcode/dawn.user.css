@@ -1,0 +1,76 @@
+/* ==UserStyle==
+@name         ampcode Rosé Pine Dawn
+@namespace    tjbai/amp-web-themes
+@version      1.2.0
+@description  Rosé Pine Dawn palette for ampcode.com.
+==/UserStyle== */
+@-moz-document domain("ampcode.com") {
+  :root, [data-amp-content-theme], .app-shell {
+    color-scheme: light !important;
+    --background: #fffaf3 !important;
+    --amp-shell-light-background-color: #faf4ed !important;
+    --amp-shell-dark-background-color: #faf4ed !important;
+    --amp-surface-light-background-color: #faf4ed !important;
+    --amp-surface-dark-background-color: #faf4ed !important;
+    --app-surface-background: #faf4ed !important;
+    --foreground: #575279 !important;
+    --border: #dfdad9 !important;
+    --muted: #f2e9e1 !important;
+    --muted-foreground: #797593 !important;
+    --card: #fffaf3 !important;
+    --popover: #fffaf3 !important;
+    --input-background: #fffaf3 !important;
+    --input-border: #dfdad9 !important;
+    --primary: #575279 !important;
+    --primary-hover: #797593 !important;
+    --primary-foreground: #faf4ed !important;
+    --secondary: #f2e9e1 !important;
+    --secondary-hover: #dfdad9 !important;
+    --secondary-foreground: #575279 !important;
+    --accent: #f2e9e1 !important;
+    --accent-foreground: #575279 !important;
+    --ring: #286983 !important;
+    --link: #286983 !important;
+    --brand: #d7827e !important;
+    --mention: #907aa9 !important;
+    --success: #56949f !important;
+    --warning: #ea9d34 !important;
+    --warning-foreground: #faf4ed !important;
+    --warning-border: #ea9d34 !important;
+    --destructive: #b4637a !important;
+    --destructive-background: #b4637a !important;
+    --destructive-foreground: #faf4ed !important;
+    --selection-background: color-mix(in oklab, #286983 30%, transparent) !important;
+    --transcript-selection-background: color-mix(in oklab, #56949f 30%, transparent) !important;
+    --linked-passage-background: color-mix(in oklab, #907aa9 25%, transparent) !important;
+    --editor-background: #fffaf3 !important;
+    --editor-foreground: #575279 !important;
+    --diff-addition-background: color-mix(in oklab, #56949f 12%, #faf4ed) !important;
+    --diff-removal-background: color-mix(in oklab, #b4637a 12%, #faf4ed) !important;
+    --diff-addition-foreground: #56949f !important;
+    --diff-removal-foreground: #b4637a !important;
+    --diff-meta-foreground: #ea9d34 !important;
+    --hljs-function: #286983 !important;
+    --hljs-keyword: #907aa9 !important;
+    --hljs-class: #ea9d34 !important;
+    --hljs-string: #56949f !important;
+    --hljs-comment: #9893a5 !important;
+    --hljs-number: #d7827e !important;
+    --terminal-black: #797593 !important;
+    --terminal-red: #b4637a !important;
+    --terminal-green: #56949f !important;
+    --terminal-yellow: #ea9d34 !important;
+    --terminal-blue: #286983 !important;
+    --terminal-magenta: #907aa9 !important;
+    --terminal-cyan: #56949f !important;
+    --terminal-white: #797593 !important;
+    --terminal-bright-black: #9893a5 !important;
+    --terminal-bright-red: #b4637a !important;
+    --terminal-bright-green: #56949f !important;
+    --terminal-bright-yellow: #ea9d34 !important;
+    --terminal-bright-blue: #286983 !important;
+    --terminal-bright-magenta: #907aa9 !important;
+    --terminal-bright-cyan: #56949f !important;
+    --terminal-bright-white: #575279 !important;
+  }
+}

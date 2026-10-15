@@ -216,6 +216,17 @@ html:not([data-thread-width="full"])
   box-shadow: 0 0 0 1.5px var(--sidebar, var(--background)) !important;
 }
 
+/* ── sidebar: no status dots on group headers ──
+   a collapsed group header (`[data-testid="sidebar-thread-group-header"]`) rolls
+   its threads up into a cluster after the label: running spinner and unread dot,
+   each a span wrapping the icon + an `.sr-only` count, plus a red "Error" text
+   (`role=status`, no .sr-only, kept). the header's own thread count is a bare
+   `.sr-only` child of the button, so `span:has(> .sr-only)` only hits the dots.
+   thread rows (the X/Y subthread badge) are outside this selector. */
+[data-testid="sidebar-thread-group-header"] span:has(> .sr-only) {
+  display: none !important;
+}
+
 /* ── code editor / diff views (codemirror). settings → appearance writes these; pin here. ──
 :root {
   --app-code-font-size: 0.78rem !important;

@@ -1,0 +1,76 @@
+/* ==UserStyle==
+@name         ampcode Gruvbox Light
+@namespace    tjbai/amp-web-themes
+@version      1.2.0
+@description  Gruvbox Light palette for ampcode.com.
+==/UserStyle== */
+@-moz-document domain("ampcode.com") {
+  :root, [data-amp-content-theme], .app-shell {
+    color-scheme: light !important;
+    --background: #f2e5bc !important;
+    --amp-shell-light-background-color: #f9f5d7 !important;
+    --amp-shell-dark-background-color: #f9f5d7 !important;
+    --amp-surface-light-background-color: #f9f5d7 !important;
+    --amp-surface-dark-background-color: #f9f5d7 !important;
+    --app-surface-background: #f9f5d7 !important;
+    --foreground: #3c3836 !important;
+    --border: #d5c4a1 !important;
+    --muted: #ebdbb2 !important;
+    --muted-foreground: #665c54 !important;
+    --card: #f2e5bc !important;
+    --popover: #f2e5bc !important;
+    --input-background: #f2e5bc !important;
+    --input-border: #d5c4a1 !important;
+    --primary: #3c3836 !important;
+    --primary-hover: #665c54 !important;
+    --primary-foreground: #f9f5d7 !important;
+    --secondary: #ebdbb2 !important;
+    --secondary-hover: #d5c4a1 !important;
+    --secondary-foreground: #3c3836 !important;
+    --accent: #ebdbb2 !important;
+    --accent-foreground: #3c3836 !important;
+    --ring: #076678 !important;
+    --link: #076678 !important;
+    --brand: #af3a03 !important;
+    --mention: #8f3f71 !important;
+    --success: #79740e !important;
+    --warning: #b57614 !important;
+    --warning-foreground: #f9f5d7 !important;
+    --warning-border: #b57614 !important;
+    --destructive: #9d0006 !important;
+    --destructive-background: #9d0006 !important;
+    --destructive-foreground: #f9f5d7 !important;
+    --selection-background: color-mix(in oklab, #076678 30%, transparent) !important;
+    --transcript-selection-background: color-mix(in oklab, #79740e 30%, transparent) !important;
+    --linked-passage-background: color-mix(in oklab, #8f3f71 25%, transparent) !important;
+    --editor-background: #f2e5bc !important;
+    --editor-foreground: #3c3836 !important;
+    --diff-addition-background: color-mix(in oklab, #79740e 12%, #f9f5d7) !important;
+    --diff-removal-background: color-mix(in oklab, #9d0006 12%, #f9f5d7) !important;
+    --diff-addition-foreground: #79740e !important;
+    --diff-removal-foreground: #9d0006 !important;
+    --diff-meta-foreground: #b57614 !important;
+    --hljs-function: #076678 !important;
+    --hljs-keyword: #8f3f71 !important;
+    --hljs-class: #b57614 !important;
+    --hljs-string: #79740e !important;
+    --hljs-comment: #928374 !important;
+    --hljs-number: #af3a03 !important;
+    --terminal-black: #665c54 !important;
+    --terminal-red: #9d0006 !important;
+    --terminal-green: #79740e !important;
+    --terminal-yellow: #b57614 !important;
+    --terminal-blue: #076678 !important;
+    --terminal-magenta: #8f3f71 !important;
+    --terminal-cyan: #427b58 !important;
+    --terminal-white: #665c54 !important;
+    --terminal-bright-black: #928374 !important;
+    --terminal-bright-red: #9d0006 !important;
+    --terminal-bright-green: #79740e !important;
+    --terminal-bright-yellow: #b57614 !important;
+    --terminal-bright-blue: #076678 !important;
+    --terminal-bright-magenta: #8f3f71 !important;
+    --terminal-bright-cyan: #427b58 !important;
+    --terminal-bright-white: #3c3836 !important;
+  }
+}

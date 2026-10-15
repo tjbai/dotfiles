@@ -1,0 +1,76 @@
+/* ==UserStyle==
+@name         ampcode Kanagawa Lotus
+@namespace    tjbai/amp-web-themes
+@version      1.2.0
+@description  Kanagawa Lotus palette for ampcode.com.
+==/UserStyle== */
+@-moz-document domain("ampcode.com") {
+  :root, [data-amp-content-theme], .app-shell {
+    color-scheme: light !important;
+    --background: #e5ddb0 !important;
+    --amp-shell-light-background-color: #f2ecbc !important;
+    --amp-shell-dark-background-color: #f2ecbc !important;
+    --amp-surface-light-background-color: #f2ecbc !important;
+    --amp-surface-dark-background-color: #f2ecbc !important;
+    --app-surface-background: #f2ecbc !important;
+    --foreground: #43436c !important;
+    --border: #d5cea3 !important;
+    --muted: #dcd5ac !important;
+    --muted-foreground: #545464 !important;
+    --card: #e5ddb0 !important;
+    --popover: #e5ddb0 !important;
+    --input-background: #e5ddb0 !important;
+    --input-border: #d5cea3 !important;
+    --primary: #43436c !important;
+    --primary-hover: #545464 !important;
+    --primary-foreground: #f2ecbc !important;
+    --secondary: #dcd5ac !important;
+    --secondary-hover: #d5cea3 !important;
+    --secondary-foreground: #43436c !important;
+    --accent: #dcd5ac !important;
+    --accent-foreground: #43436c !important;
+    --ring: #4d699b !important;
+    --link: #4d699b !important;
+    --brand: #cc6d00 !important;
+    --mention: #624c83 !important;
+    --success: #6f894e !important;
+    --warning: #77713f !important;
+    --warning-foreground: #f2ecbc !important;
+    --warning-border: #77713f !important;
+    --destructive: #c84053 !important;
+    --destructive-background: #c84053 !important;
+    --destructive-foreground: #f2ecbc !important;
+    --selection-background: color-mix(in oklab, #4d699b 30%, transparent) !important;
+    --transcript-selection-background: color-mix(in oklab, #6f894e 30%, transparent) !important;
+    --linked-passage-background: color-mix(in oklab, #624c83 25%, transparent) !important;
+    --editor-background: #e5ddb0 !important;
+    --editor-foreground: #43436c !important;
+    --diff-addition-background: color-mix(in oklab, #6f894e 12%, #f2ecbc) !important;
+    --diff-removal-background: color-mix(in oklab, #c84053 12%, #f2ecbc) !important;
+    --diff-addition-foreground: #6f894e !important;
+    --diff-removal-foreground: #c84053 !important;
+    --diff-meta-foreground: #77713f !important;
+    --hljs-function: #4d699b !important;
+    --hljs-keyword: #624c83 !important;
+    --hljs-class: #77713f !important;
+    --hljs-string: #6f894e !important;
+    --hljs-comment: #8a8980 !important;
+    --hljs-number: #cc6d00 !important;
+    --terminal-black: #545464 !important;
+    --terminal-red: #c84053 !important;
+    --terminal-green: #6f894e !important;
+    --terminal-yellow: #77713f !important;
+    --terminal-blue: #4d699b !important;
+    --terminal-magenta: #624c83 !important;
+    --terminal-cyan: #597b75 !important;
+    --terminal-white: #545464 !important;
+    --terminal-bright-black: #8a8980 !important;
+    --terminal-bright-red: #c84053 !important;
+    --terminal-bright-green: #6f894e !important;
+    --terminal-bright-yellow: #77713f !important;
+    --terminal-bright-blue: #4d699b !important;
+    --terminal-bright-magenta: #624c83 !important;
+    --terminal-bright-cyan: #597b75 !important;
+    --terminal-bright-white: #43436c !important;
+  }
+}

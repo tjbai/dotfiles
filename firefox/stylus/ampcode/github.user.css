@@ -1,0 +1,76 @@
+/* ==UserStyle==
+@name         ampcode GitHub Light
+@namespace    tjbai/amp-web-themes
+@version      1.2.0
+@description  GitHub Light palette for ampcode.com.
+==/UserStyle== */
+@-moz-document domain("ampcode.com") {
+  :root, [data-amp-content-theme], .app-shell {
+    color-scheme: light !important;
+    --background: #f6f8fa !important;
+    --amp-shell-light-background-color: #ffffff !important;
+    --amp-shell-dark-background-color: #ffffff !important;
+    --amp-surface-light-background-color: #ffffff !important;
+    --amp-surface-dark-background-color: #ffffff !important;
+    --app-surface-background: #ffffff !important;
+    --foreground: #1f2328 !important;
+    --border: #d0d7de !important;
+    --muted: #eaeef2 !important;
+    --muted-foreground: #656d76 !important;
+    --card: #f6f8fa !important;
+    --popover: #f6f8fa !important;
+    --input-background: #f6f8fa !important;
+    --input-border: #d0d7de !important;
+    --primary: #1f2328 !important;
+    --primary-hover: #656d76 !important;
+    --primary-foreground: #ffffff !important;
+    --secondary: #eaeef2 !important;
+    --secondary-hover: #d0d7de !important;
+    --secondary-foreground: #1f2328 !important;
+    --accent: #eaeef2 !important;
+    --accent-foreground: #1f2328 !important;
+    --ring: #0969da !important;
+    --link: #0969da !important;
+    --brand: #bc4c00 !important;
+    --mention: #8250df !important;
+    --success: #1a7f37 !important;
+    --warning: #9a6700 !important;
+    --warning-foreground: #ffffff !important;
+    --warning-border: #9a6700 !important;
+    --destructive: #cf222e !important;
+    --destructive-background: #cf222e !important;
+    --destructive-foreground: #ffffff !important;
+    --selection-background: color-mix(in oklab, #0969da 30%, transparent) !important;
+    --transcript-selection-background: color-mix(in oklab, #1a7f37 30%, transparent) !important;
+    --linked-passage-background: color-mix(in oklab, #8250df 25%, transparent) !important;
+    --editor-background: #f6f8fa !important;
+    --editor-foreground: #1f2328 !important;
+    --diff-addition-background: color-mix(in oklab, #1a7f37 12%, #ffffff) !important;
+    --diff-removal-background: color-mix(in oklab, #cf222e 12%, #ffffff) !important;
+    --diff-addition-foreground: #1a7f37 !important;
+    --diff-removal-foreground: #cf222e !important;
+    --diff-meta-foreground: #9a6700 !important;
+    --hljs-function: #0969da !important;
+    --hljs-keyword: #8250df !important;
+    --hljs-class: #9a6700 !important;
+    --hljs-string: #1a7f37 !important;
+    --hljs-comment: #6e7781 !important;
+    --hljs-number: #bc4c00 !important;
+    --terminal-black: #656d76 !important;
+    --terminal-red: #cf222e !important;
+    --terminal-green: #1a7f37 !important;
+    --terminal-yellow: #9a6700 !important;
+    --terminal-blue: #0969da !important;
+    --terminal-magenta: #8250df !important;
+    --terminal-cyan: #1b7c83 !important;
+    --terminal-white: #656d76 !important;
+    --terminal-bright-black: #6e7781 !important;
+    --terminal-bright-red: #cf222e !important;
+    --terminal-bright-green: #1a7f37 !important;
+    --terminal-bright-yellow: #9a6700 !important;
+    --terminal-bright-blue: #0969da !important;
+    --terminal-bright-magenta: #8250df !important;
+    --terminal-bright-cyan: #1b7c83 !important;
+    --terminal-bright-white: #1f2328 !important;
+  }
+}
