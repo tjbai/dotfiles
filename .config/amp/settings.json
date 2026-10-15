@@ -1,7 +1,7 @@
 {
   "amp.dangerouslyAllowAll": true,
   "amp.agent.deepReasoningEffort": "xhigh",
-  "amp.gauge": "cost",
+  "amp.gauge": "tokens",
   "amp.remoteThreadCreation.enabled": true,
   "amp.runner.autoUpdate.enabled": true
 }
