@@ -1,11 +1,11 @@
 /* ==UserStyle==
 @name         ampcode Everforest Dark
 @namespace    tjbai/amp-web-themes
-@version      1.2.0
+@version      1.3.0
 @description  Everforest Dark palette for ampcode.com.
 ==/UserStyle== */
 @-moz-document domain("ampcode.com") {
-  :root, [data-amp-content-theme], .app-shell {
+  :root, [data-amp-content-theme], .app-shell, .app-frame-stack {
     color-scheme: dark !important;
     --background: #333c43 !important;
     --amp-shell-light-background-color: #2d353b !important;
@@ -13,6 +13,8 @@
     --amp-surface-light-background-color: #2d353b !important;
     --amp-surface-dark-background-color: #2d353b !important;
     --app-surface-background: #2d353b !important;
+    --app-shell-background: #2d353b !important;
+    --app-pane-canvas-background: #2d353b !important;
     --foreground: #d3c6aa !important;
     --border: #475258 !important;
     --muted: #3d484d !important;

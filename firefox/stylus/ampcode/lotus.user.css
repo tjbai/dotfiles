@@ -1,11 +1,11 @@
 /* ==UserStyle==
 @name         ampcode Kanagawa Lotus
 @namespace    tjbai/amp-web-themes
-@version      1.2.0
+@version      1.3.0
 @description  Kanagawa Lotus palette for ampcode.com.
 ==/UserStyle== */
 @-moz-document domain("ampcode.com") {
-  :root, [data-amp-content-theme], .app-shell {
+  :root, [data-amp-content-theme], .app-shell, .app-frame-stack {
     color-scheme: light !important;
     --background: #e5ddb0 !important;
     --amp-shell-light-background-color: #f2ecbc !important;
@@ -13,6 +13,8 @@
     --amp-surface-light-background-color: #f2ecbc !important;
     --amp-surface-dark-background-color: #f2ecbc !important;
     --app-surface-background: #f2ecbc !important;
+    --app-shell-background: #f2ecbc !important;
+    --app-pane-canvas-background: #f2ecbc !important;
     --foreground: #43436c !important;
     --border: #d5cea3 !important;
     --muted: #dcd5ac !important;

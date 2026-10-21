@@ -8,6 +8,14 @@
   display: none !important;
 }
 
+/* ── kill: the quick-action chips above the composer ──
+   `[data-thread-quick-action-row]` holds the diff stat (view-changes), ship / push,
+   open portal, and the situational ones (view pr, fix ci, review, restack, …).
+   each chip is `[data-thread-quick-action="<id>"]` if one ever needs to come back. */
+[data-thread-quick-action-row] {
+  display: none !important;
+}
+
 /* ── fonts: inter variable (bundled, latin subset), berkeley mono stays (amp serves it) ── */
 @font-face {
   font-family: "Inter Variable";

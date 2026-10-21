@@ -179,6 +179,11 @@ function css(name: string, p: Palette): string {
 		["--amp-surface-dark-background-color", `${p.bg}`],
 		// declared on .app-shell itself, so the selector below includes .app-shell.
 		["--app-surface-background", `${p.bg}`],
+		["--app-shell-background", `${p.bg}`],
+		// card-pane layout: the thread header and the gap around the transcript /
+		// sidebar cards paint from this, declared on .app-frame-stack[data-card-panes]
+		// as a mix of shell + surface (darker than either). flatten it to bg.
+		["--app-pane-canvas-background", `${p.bg}`],
 		["--foreground", `${p.fg}`],
 		["--border", `${p.bg3}`],
 		["--muted", `${p.bg2}`],
@@ -243,11 +248,11 @@ function css(name: string, p: Palette): string {
 	return `/* ==UserStyle==
 @name         ampcode ${p.label}
 @namespace    tjbai/amp-web-themes
-@version      1.2.0
+@version      1.3.0
 @description  ${p.label} palette for ampcode.com.
 ==/UserStyle== */
 @-moz-document domain("ampcode.com") {
-  :root, [data-amp-content-theme], .app-shell {
+  :root, [data-amp-content-theme], .app-shell, .app-frame-stack {
     color-scheme: ${p.scheme} !important;
 ${decls}
   }
