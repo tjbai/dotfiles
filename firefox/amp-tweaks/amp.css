@@ -145,6 +145,14 @@ body,
   font-size: 0.9em !important;
   border-radius: 4px !important;
 }
+/* amp breaks tables (and galleries) out of the column: the md: wrapper sets
+   --transcript-wide-block-max-width to calc(100% + 7rem) and
+   [data-transcript-markdown-table-wrapper] centers itself on it (margin-left 50%,
+   translate -50%). that suits the stock 39rem column; at --tj-column it just hangs
+   past the prose on both sides. keep it flush, the wrapper's scroller handles overflow. */
+.markdown {
+  --transcript-wide-block-max-width: 100% !important;
+}
 
 /* ── code: berkeley mono (TX-02 variable) has its own stylistic sets, so the inter
    cv01/ss03 + 450 weight inherited from body/.markdown mangles it. reset. ── */

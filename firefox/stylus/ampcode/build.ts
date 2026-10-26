@@ -7,7 +7,7 @@
 // variant, or a palette built for reading on paper (flexoki, modus,
 // github), picked for body-text contrast >= 7:1 where the scheme has it.
 
-interface Palette {
+export interface Palette {
 	label: string
 	scheme: "light" | "dark"
 	bg: string // page background: transcript, sidebar
@@ -26,7 +26,7 @@ interface Palette {
 	orange: string
 }
 
-const palettes: Record<string, Palette> = {
+export const palettes: Record<string, Palette> = {
 	gruvbox: {
 		label: 'Gruvbox Dark',
 		scheme: 'dark',
@@ -267,16 +267,19 @@ function section(body: string): string {
 	return body.slice(open + 1, body.lastIndexOf("}")).trim()
 }
 
-const styles = []
-for (const [name, p] of Object.entries(palettes)) {
-	const body = css(name, p)
-	await Bun.write(new URL(`./${name}.user.css`, import.meta.url), body)
-	console.log(`wrote ${name}.user.css`)
-	styles.push({
-		name: `ampcode ${p.label}`,
-		enabled: name === "kanagawa",
-		sections: [{ code: section(body), domains: ["ampcode.com"] }],
-	})
+// obsidian/build.ts imports the palettes; only write stylus output when run directly.
+if (import.meta.main) {
+	const styles = []
+	for (const [name, p] of Object.entries(palettes)) {
+		const body = css(name, p)
+		await Bun.write(new URL(`./${name}.user.css`, import.meta.url), body)
+		console.log(`wrote ${name}.user.css`)
+		styles.push({
+			name: `ampcode ${p.label}`,
+			enabled: name === "kanagawa",
+			sections: [{ code: section(body), domains: ["ampcode.com"] }],
+		})
+	}
+	await Bun.write(new URL("./stylus-import.json", import.meta.url), JSON.stringify(styles, null, "\t") + "\n")
+	console.log("wrote stylus-import.json")
 }
-await Bun.write(new URL("./stylus-import.json", import.meta.url), JSON.stringify(styles, null, "\t") + "\n")
-console.log("wrote stylus-import.json")
