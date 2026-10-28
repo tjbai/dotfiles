@@ -123,12 +123,25 @@ body,
 .markdown code {
   font-size: 0.95em !important;
 }
+/* fenced code renders as `[data-transcript-markdown-code-wrapper] > overlay + pre > code`.
+   the wrapper owns the block margin, the pre's margin-top is negative so the copy /
+   wrap overlay sits on it, and the scroller is `code` (margin-right -1.5rem into the
+   pre's 2.25rem right padding). so only touch the left padding and the block padding
+   var; overriding the pre's right padding or margin pushes text past the border. */
 .markdown pre {
   border: 1px solid var(--border) !important;
   border-radius: 4px !important;
-  padding: 12px 14px !important;
+  padding-left: 14px !important;
   font-size: 0.95em !important; /* ~11.5px over a 12px body; berkeley mono sets small */
   line-height: 1.6 !important;
+}
+.markdown [data-transcript-markdown-code-wrapper] {
+  --transcript-code-block-padding-block: 12px !important;
+  margin: 0.9em 0 !important;
+}
+.markdown pre:not([data-transcript-markdown-code-wrapper] > pre) {
+  padding-block: 12px !important;
+  padding-right: 14px !important;
   margin: 0.9em 0 !important;
 }
 .markdown pre code {
@@ -145,12 +158,13 @@ body,
   font-size: 0.9em !important;
   border-radius: 4px !important;
 }
-/* amp breaks tables (and galleries) out of the column: the md: wrapper sets
-   --transcript-wide-block-max-width to calc(100% + 7rem) and
-   [data-transcript-markdown-table-wrapper] centers itself on it (margin-left 50%,
-   translate -50%). that suits the stock 39rem column; at --tj-column it just hangs
-   past the prose on both sides. keep it flush, the wrapper's scroller handles overflow. */
-.markdown {
+/* amp breaks tables (and galleries) out of the column: at >=48rem the wrapper itself
+   gets --transcript-wide-block-max-width: calc(100% + 7rem) and centers on it
+   (margin-left 50%, translate -50%). that suits the stock 39rem column; at
+   --tj-column it just hangs past the prose on both sides. set the var on the
+   wrapper (it no longer inherits from .markdown) and keep it flush; the wrapper's
+   scroller handles overflow. */
+.markdown :is([data-transcript-markdown-table-wrapper], [data-transcript-gallery]) {
   --transcript-wide-block-max-width: 100% !important;
 }
 
