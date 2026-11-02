@@ -16,6 +16,14 @@
   display: none !important;
 }
 
+/* ── kill: the launcher grid at the bottom of the sidebar ──
+   `[data-launcher-sidebar-grid]` ("Primary Navigation") holds the puck / call puck /
+   activity / launcher / projects tiles. the reload banner above and the account row
+   below are sibling menus in the footer and stay. */
+[data-launcher-sidebar-grid] {
+  display: none !important;
+}
+
 /* ── fonts: inter variable (bundled, latin subset), berkeley mono stays (amp serves it) ── */
 @font-face {
   font-family: "Inter Variable";
