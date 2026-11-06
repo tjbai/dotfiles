@@ -16,11 +16,15 @@
   display: none !important;
 }
 
-/* ── kill: the launcher grid at the bottom of the sidebar ──
-   `[data-launcher-sidebar-grid]` ("Primary Navigation") holds the puck / call puck /
-   activity / launcher / projects tiles. the reload banner above and the account row
-   below are sibling menus in the footer and stay. */
-[data-launcher-sidebar-grid] {
+/* ── kill: the puck / live now / activity / projects launchers ──
+   they used to be tiles in `[data-launcher-sidebar-grid]` at the bottom of the
+   sidebar; amp moved them into a left icon rail, `[data-primary-navigation-rail]`
+   ("Primary Navigation"), one `li` per destination, each link tagged with its own
+   data-* hook. threads (`[data-launcher-link]` alone), more, and the account menu
+   stay. the grid rule is kept for layouts that still render it. */
+[data-launcher-sidebar-grid],
+[data-primary-navigation-rail]
+  li:has(> :is([data-puck-trigger], [data-live-now-trigger], [data-sidebar-feed-row], [data-sidebar-projects-row])) {
   display: none !important;
 }
 
@@ -201,21 +205,17 @@ body,
 }
 
 /* ── reading column ──
-   two layouts, keyed off whether thread comments are on for the account:
-   · comments off: the transcript (`[data-thread-transcript-content]`) is
-     `max-w-(--thread-column-max-width)`, :root 42rem (settings → thread width:
-     default / wide = max(42rem, 60%) / full = none), 1.5rem padding a side.
-   · comments on (current): the transcript content has no max-width; the entry list
-     `[data-transcript-entry-list].transcript-comments-grid` is a 3-col grid with an
-     inline `grid-template-columns: minmax(0,1fr) minmax(0,39rem) max(3rem, …)`,
-     col 2 the entries, col 3 the comments gutter (3rem, 18rem when a comment is
-     expanded, `0 minmax(0,1fr) 3rem` in full width). the var is only used by the
-     composer wrapper (`p-2`, so form = var − 1rem) and the floating toc /
-     jump-to-bottom pill (`max-w-2xl`). stock: 39rem transcript, 42rem composer.
+   the entry list `[data-transcript-entry-list].transcript-column-grid` is a 3-col
+   grid with an inline `grid-template-columns: minmax(0,1fr) minmax(0,39rem)
+   minmax(0,1fr)`, entries in col 2 (wide: `max(39rem, calc(100% * .6 - 1.2rem))`;
+   full width swaps the grid for a flex column, so no class). the old comments
+   gutter (`.transcript-comments-grid`, 3rem col 3) is gone; timestamps now hang in
+   the `.transcript-timestamp-gutters` padding (3.5rem a side). --thread-column-max-width
+   only feeds the composer wrapper (`p-2`, so form = var − 1rem) and the floating
+   toc / jump-to-bottom pill (`max-w-2xl`). stock: 39rem transcript, 42rem composer.
    keep that 3rem relation: --tj-column (54rem = 864px) for the transcript, +3rem
    for the composer + pill. the grid's inline style has no !important, so a
-   stylesheet !important wins; skip the expanded (18rem) and full-width states,
-   which only exist in that inline string. */
+   stylesheet !important wins. */
 :root {
   --tj-column: 54rem;
   --thread-column-max-width: calc(var(--tj-column) + 3rem) !important;
@@ -223,12 +223,8 @@ body,
 .thread-chat-scroll-region .max-w-2xl {
   max-width: calc(var(--tj-column) + 3rem) !important;
 }
-html:not([data-thread-width="full"])
-  [data-transcript-entry-list].transcript-comments-grid:not([style*="18rem"]) {
-  grid-template-columns:
-    minmax(0, 1fr)
-    minmax(0, var(--tj-column))
-    max(3rem, calc((100% - var(--tj-column)) / 2)) !important;
+[data-transcript-entry-list].transcript-column-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, var(--tj-column)) minmax(0, 1fr) !important;
 }
 
 /* ── sidebar: loud unread ──
