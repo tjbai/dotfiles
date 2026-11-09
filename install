@@ -30,6 +30,15 @@ mkdir -p ~/.local/bin
 ln -sfn "$ROOT/launchd/lj" ~/.local/bin/lj
 "$ROOT/launchd/lj" apply --prune
 
+# macos shortcuts: cmd+esc cycles the app's windows (symbolic hotkey 27, "move
+# focus to next window"). tahoe's game overlay (260) claims cmd+esc by default
+# and eats it first, so turn it off. activateSettings applies without a logout.
+hk() { defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add "$1" \
+  "<dict><key>enabled</key><$2/><key>value</key><dict><key>parameters</key><array><integer>65535</integer><integer>$3</integer><integer>$4</integer></array><key>type</key><string>standard</string></dict></dict>"; }
+hk 27 true 53 1048576
+hk 260 false 53 1048576
+/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
+
 # tmux: install if missing, plus resurrect/continuum (session durability)
 if ! command -v tmux >/dev/null; then
   if command -v brew >/dev/null; then brew install tmux
