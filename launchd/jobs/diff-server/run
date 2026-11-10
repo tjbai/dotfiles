@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# the ~/dev/diff server, in the foreground so launchd keeps it up across logins
+# and crashes. the `diff` cli also starts its own detached copy when the code
+# changes (`diff --restart`, or a version mismatch), so: while some server
+# already answers on the port, wait; take over only once nothing does. the
+# initial sleep lets a cli restart, which stops this server, rebind first.
+set -u
+sleep 2
+while curl -sf -m 1 -o /dev/null http://127.0.0.1:7717/health; do sleep 5; done
+exec "$HOME/.bun/bin/bun" "$HOME/dev/diff/src/server.ts"

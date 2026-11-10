@@ -1,0 +1,4 @@
+KEEP_ALIVE=1
+CWD="$HOME/dev/diff"
+HOSTS="work"
+DESC="local github diff server on 127.0.0.1:7717 (~/dev/diff); the firefox extension redirects to it"
