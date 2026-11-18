@@ -16,15 +16,24 @@
   display: none !important;
 }
 
-/* ── kill: the puck / live now / activity / projects launchers ──
-   they used to be tiles in `[data-launcher-sidebar-grid]` at the bottom of the
-   sidebar; amp moved them into a left icon rail, `[data-primary-navigation-rail]`
-   ("Primary Navigation"), one `li` per destination, each link tagged with its own
-   data-* hook. threads (`[data-launcher-link]` alone), more, and the account menu
-   stay. the grid rule is kept for layouts that still render it. */
-[data-launcher-sidebar-grid],
-[data-primary-navigation-rail]
-  li:has(> :is([data-puck-trigger], [data-live-now-trigger], [data-sidebar-feed-row], [data-sidebar-projects-row])) {
+/* ── kill: the left icon rail ──
+   desktop puts a 3.5rem column, `.app-primary-navigation` (holding
+   `[data-primary-navigation-rail]`: threads / feed / boxes / more + account), left
+   of the thread sidebar, a direct child of `.app-frame-stack-rail`. the sidebar
+   panel follows the route (only /boxes swaps it), so without the rail it stays on
+   threads. `.app-shell` also sets `--app-primary-navigation-width: 3.5rem` inline
+   for things positioned past the rail; zero it so nothing leaves a gap. */
+.app-primary-navigation {
+  display: none !important;
+}
+.app-shell {
+  --app-primary-navigation-width: 0px !important;
+}
+
+/* ── kill: the "N Need You · N Running" chips + filter menu above the thread list ──
+   one row, `[data-testid="sidebar-label-filters"]`: activity chips
+   (`[data-sidebar-activity-filter-*]`), label chips, and the filter menu trigger. */
+[data-testid="sidebar-label-filters"] {
   display: none !important;
 }
 
@@ -250,6 +259,14 @@ body,
   box-shadow: 0 0 0 1.5px var(--sidebar, var(--background)) !important;
 }
 
+/* ── kill: the "Recently Viewed" block above the thread list ──
+   amp renders it as its own `nav[data-sidebar-recently-viewed]` sibling before
+   `[data-sidebar-thread-list-scroller]`, so the pinned `order: -1` below can't lift
+   pinned past it, and threads in it repeat (selected highlight and all) further down. */
+[data-sidebar-recently-viewed] {
+  display: none !important;
+}
+
 /* ── sidebar: no status dots on group headers ──
    a collapsed group header (`[data-testid="sidebar-thread-group-header"]`) rolls
    its threads up into a cluster after the label: running spinner and unread dot,
@@ -259,6 +276,35 @@ body,
    thread rows (the X/Y subthread badge) are outside this selector. */
 [data-testid="sidebar-thread-group-header"] span:has(> .sr-only) {
   display: none !important;
+}
+
+/* ── sidebar: plain pinned rows ──
+   pinned rows (`[data-thread-row-pinned]`) render as two lines: title, then the
+   thread's status (`[data-thread-row-status-line]`). drop the status so they read
+   as one-line titles. the subthread toggle (`[data-sidebar-subthreads-toggle]`,
+   the old X/Y badge, now a chevron in a 1px bordered box) loses its box. */
+[data-thread-row-pinned] [data-thread-row-status-line] {
+  display: none !important;
+}
+[data-sidebar-subthreads-toggle] {
+  border-color: transparent !important;
+}
+
+/* ── sidebar: pinned above spaces ──
+   the thread list `ul[data-sidebar-thread-list-scroller]` is a flex column whose
+   direct children are, per group, a header `li[data-sidebar="menu-item"]` (button
+   `[data-sidebar-group-header-id=<id>]`) then a rows `li` (rows carry
+   `[data-sidebar-group-id=<id>]`). spaces renders first, then `pinned`, then
+   projects. `order: -1` lifts both pinned `li`s to the top. the group after rows
+   gets amp's `mt-3` from dom order, which spaces no longer has, so give the
+   headers that sat above pinned that gap back. */
+[data-sidebar-thread-list-scroller]
+  > li:has([data-sidebar-group-header-id="pinned"], [data-sidebar-group-id="pinned"]) {
+  order: -1 !important;
+}
+[data-sidebar-thread-list-scroller]
+  > li[data-sidebar="menu-item"]:has(~ li [data-sidebar-group-header-id="pinned"]) {
+  margin-top: 0.75rem !important;
 }
 
 /* ── code editor / diff views (codemirror). settings → appearance writes these; pin here. ──
